@@ -1,0 +1,121 @@
+[project]
+name = "deep-research-agent-framework-toolkit"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiohttp>=3.12.15",
+    "beautifulsoup4>=4.13.4",
+    "gradio>=5.39.0",
+    "langfuse>=3.2.1",
+    "logfire>=4.0.1",
+    "nest-asyncio>=1.6.0",
+    "openai==1.93.1",
+    "openai-agents>=0.2.0",
+    "pydantic>=2.11.7",
+    "pydantic-ai-slim>=0.4.10",
+    "weaviate-client>=4.16.5",
+]
+
+[dependency-groups]
+dev = [
+    "codecov>=2.1.13",
+    "ipykernel>=6.29.5",
+    "ipython>=9.4.0",
+    "ipywidgets>=8.1.7",
+    "jupyter>=1.1.1",
+    "jupyterlab>=4.4.2",
+    "nbqa>=1.9.1",
+    "pip-audit>=2.7.3",
+    "pre-commit>=4.1.0",
+    "pytest>=8.3.4",
+    "pytest-asyncio>=0.25.2",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "ruff>=0.12.2",
+]
+docs = [
+    "jinja2>=3.1.6", # Pinning version to address vulnerability GHSA-cpwx-vrp4-4pq7
+    "mkdocs>=1.6.0",
+    "mkdocs-material>=9.6.15",
+    "mkdocstrings>=0.24.1",
+    "mkdocstrings-python>=1.16.12",
+    "ipykernel>=6.29.5",
+    "ipython>=9.4.0",
+]
+
+# Default dependency groups to be installed
+[tool.uv]
+default-groups = ["dev", "docs"]
+
+[tool.ruff]
+include = ["*.py", "pyproject.toml", "*.ipynb"]
+line-length = 88
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+    "A", # flake8-builtins
+    "B", # flake8-bugbear
+    "COM", # flake8-commas
+    "C4", # flake8-comprehensions
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "ICN", # flake8-import-conventions
+    "Q", # flake8-quotes
+    "RSE", # flake8-raise
+    "D", # pydocstyle
+    "E", # pycodestyle
+    "F", # pyflakes
+    "I", # isort
+    "W", # pycodestyle
+    "N", # pep8-naming
+    "ERA", # eradicate
+    "PL", # pylint
+]
+fixable = ["A", "B", "COM", "C4", "RET", "SIM", "ICN", "Q", "RSE", "D", "E", "F", "I", "W", "N", "ERA", "PL"]
+ignore = [
+    "B905", # `zip()` without an explicit `strict=` parameter
+    "E501", # line too long
+    "D203", # 1 blank line required before class docstring
+    "D213", # Multi-line docstring summary should start at the second line
+    "PLR2004", # Replace magic number with named constant
+    "PLR0913", # Too many arguments
+    "COM812", # Missing trailing comma
+    "N999", # Number in module names.
+    "ERA001", # Commented out lines.
+]
+
+# Ignore import violations in all `__init__.py` files.
+# Ignore missing docstring in `__init__.py` files
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401", "F403", "F811", "D104"]
+
+
+
+[tool.ruff.lint.pep8-naming]
+ignore-names = ["X*", "setUp"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.pycodestyle]
+max-doc-length = 88
+
+[tool.pytest.ini_options]
+markers = [
+    "integration_test: marks tests as integration tests",
+]
+
+[tool.coverage]
+    [tool.coverage.run]
+    source=["aieng_template"]
+    omit=["tests/*", "*__init__.py"]
