@@ -9,7 +9,7 @@ Contact: lim.jeikei@gmail.com
 """
 
 import os
-from typing import Callable
+from typing import Callable, List
 
 import agents
 from agents.result import RunResult
@@ -55,10 +55,8 @@ def agent_config_to_agent(
     # and if so, set the model settings accordingly
 
     tools = []
-    # TODO: Check if tools exist in config.configs,
-    # and if so, set the tools accordingly
     if "function_tools" in config.configs:
-        tools = [
+        tools: List[agents.Tool] = [
             agents.function_tool(function_tools[tool_name])
             for tool_name in config.configs.function_tools
         ]
