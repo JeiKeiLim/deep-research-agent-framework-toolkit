@@ -9,12 +9,14 @@ Contact: lim.jeikei@gmail.com
 """
 
 import os
-from typing import Any, Coroutine
 
 import agents
 from agents.result import RunResult
 from omegaconf import DictConfig
 from openai import AsyncOpenAI
+
+from src.draft_agents.function_tools import function_tools
+from src.draft_agents.output_types import SearchPlan, output_types
 
 
 def agent_config_to_agent(
@@ -42,8 +44,23 @@ def agent_config_to_agent(
         with open(prompt, "r") as file:
             prompt = file.read()
 
-    tools = []
+    if "prompt_args" in config.configs:
+        for key, value in config.configs.prompt_args.items():
+            prompt = prompt.replace(f"{{{key}}}", str(value))
+
     model_settings = agents.ModelSettings()
+    # TODO: Check if model_settings exist in config.configs,
+    # and if so, set the model settings accordingly
+
+    tools = []
+    # TODO: Check if tools exist in config.configs,
+    # and if so, set the tools accordingly
+    if "function_tools" in config.configs:
+        tools = [
+            agents.function_tool(function_tools[tool_name])
+            for tool_name in config.configs.function_tools
+        ]
+
     if tools:
         model_settings.tool_choice = "required"
 
@@ -54,7 +71,7 @@ def agent_config_to_agent(
             model=config.configs.model, openai_client=openai_client
         ),
         tools=tools,
-        output_type=None,  # TODO: Define the output type if needed
+        output_type=output_types.get(config.name, None),
         model_settings=model_settings,
     )
 
@@ -74,7 +91,7 @@ class DeepResearchAgent:
             for key, value in agents_config.items()
         }
 
-    def query(self, query: str) -> Coroutine[Any, Any, RunResult]:
+    async def query(self, query: str) -> RunResult:
         """Process a query using the configured agents.
 
         This method runs asynchronously and processes the provided query
@@ -87,7 +104,27 @@ class DeepResearchAgent:
             Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
             returns the result.
         """
-        return agents.Runner.run(
-            self.agents["Main"],
+        response = await agents.Runner.run(
+            self.agents["Planner"],
             input=query,
+        )
+        search_plan = response.final_output_as(SearchPlan)
+
+        search_results = []
+        # TODO: Use threads or asyncio.gather to parallelize search requests
+        for search_item in search_plan.search_steps:
+            search_response = await agents.Runner.run(
+                self.agents["Search"],
+                input=search_item.search_term,
+            )
+            search_results.append(search_response.final_output_as(str))
+
+        evidences = "\n".join(
+            f"{i + 1:d}. {result}" for i, result in enumerate(search_results)
+        )
+        synthesizer_input = f"Question: {query}\n\nEvidence:\n{evidences}"
+
+        return await agents.Runner.run(
+            self.agents["Synthesizer"],
+            input=synthesizer_input,
         )

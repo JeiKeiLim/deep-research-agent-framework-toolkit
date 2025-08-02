@@ -4,10 +4,12 @@ import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
 
-from src.utils import (
+from src.draft_agents.function_tools import (
     AsyncWeaviateKnowledgeBase,
-    Configs,
     get_weaviate_async_client,
+)
+from src.utils import (
+    Configs,
     pretty_print,
 )
 

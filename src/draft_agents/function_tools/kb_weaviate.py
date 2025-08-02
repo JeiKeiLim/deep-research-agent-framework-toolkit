@@ -11,7 +11,7 @@ import weaviate
 from weaviate import WeaviateAsyncClient
 from weaviate.config import AdditionalConfig
 
-from ..async_utils import rate_limited
+from src.utils.async_utils import rate_limited
 
 
 class _Source(pydantic.BaseModel):

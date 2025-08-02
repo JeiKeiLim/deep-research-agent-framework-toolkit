@@ -9,10 +9,12 @@ from dotenv import load_dotenv
 from langfuse import Langfuse
 from openai import AsyncOpenAI
 
-from src.utils import (
+from src.draft_agents.function_tools import (
     AsyncWeaviateKnowledgeBase,
-    Configs,
     get_weaviate_async_client,
+)
+from src.utils import (
+    Configs,
     pretty_print,
 )
 from src.utils.langfuse.otlp_env_setup import set_up_langfuse_otlp_env_vars

@@ -2,4 +2,5 @@ defaults:
   - agents/main@agents.Main
   - agents/planner@agents.Planner
   - agents/synthesizer@agents.Synthesizer
+  - agents/search@agents.Search
   - _self_
