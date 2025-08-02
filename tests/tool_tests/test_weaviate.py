@@ -47,3 +47,25 @@ async def test_weaviate_kb(weaviate_kb: AsyncWeaviateKnowledgeBase):
     responses = await weaviate_kb.search_knowledgebase("What is Toronto known for?")
     assert len(responses) > 0
     pretty_print(responses)
+
+
+if __name__ == "__main__":
+    configs2 = Configs.from_env_var()
+    result = test_weaviate_kb(
+        weaviate_kb=AsyncWeaviateKnowledgeBase(
+            async_client=get_weaviate_async_client(
+                http_host=configs2.weaviate_http_host,
+                http_port=configs2.weaviate_http_port,
+                http_secure=configs2.weaviate_http_secure,
+                grpc_host=configs2.weaviate_grpc_host,
+                grpc_port=configs2.weaviate_grpc_port,
+                grpc_secure=configs2.weaviate_grpc_secure,
+                api_key=configs2.weaviate_api_key,
+            ),
+            collection_name="enwiki_20250520",
+        )
+    )
+
+    import asyncio
+
+    asyncio.run(result)

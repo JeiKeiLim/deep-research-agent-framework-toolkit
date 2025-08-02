@@ -1,0 +1,4 @@
+name: "Search"
+configs:
+  model: "gemini-2.5-flash-lite-preview-06-17"
+  prompt: "You are a helpful assistant. Your task is to search for information based on the provided context. If the context does not provide enough information, respond with 'I don't know'."

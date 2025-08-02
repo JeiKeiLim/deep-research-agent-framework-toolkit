@@ -1,0 +1,5 @@
+defaults:
+  - agents/main@agents.Main
+  - agents/planner@agents.Planner
+  - agents/synthesizer@agents.Synthesizer
+  - _self_
