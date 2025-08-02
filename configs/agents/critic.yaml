@@ -1,0 +1,4 @@
+name: "Critic"
+configs:
+  model: "gemini-2.5-flash"
+  prompt: "prompts/critic.txt"

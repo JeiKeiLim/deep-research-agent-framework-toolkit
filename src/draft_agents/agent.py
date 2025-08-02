@@ -18,7 +18,7 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel
 
 from src.draft_agents.function_tools import function_tools
-from src.draft_agents.output_types import SearchPlan, output_types
+from src.draft_agents.output_types import CriticFeedback, SearchPlan, output_types
 
 
 def agent_config_to_agent(
@@ -205,7 +205,22 @@ class DeepResearchAgent:
 
         self._notify_progress(0.9, "Synthesizing final answer")
 
-        return await agents.Runner.run(
+        synthesizer_response = await agents.Runner.run(
             self.agents["Synthesizer"],
             input=synthesizer_input,
         )
+        synthesized_answer = synthesizer_response.final_output_as(str)
+
+        critic_response = await agents.Runner.run(
+            self.agents["Critic"],
+            input=f"""Query**: {query}
+
+            **Answer**: {synthesized_answer}
+
+            **Evidence**: {evidences}
+            """,
+        )
+        critic_feedback = critic_response.final_output_as(CriticFeedback)  # noqa
+        # TODO: Make a loop to improve the answer based on critic feedback
+
+        return synthesizer_response
