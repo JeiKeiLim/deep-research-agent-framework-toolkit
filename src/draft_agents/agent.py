@@ -135,15 +135,20 @@ class DeepResearchAgent:
         if callback in self.progress_callbacks:
             self.progress_callbacks.remove(callback)
 
-    def _notify_progress(self, progress: DeepResearchProgress) -> None:
+    def _notify_progress(self, p_percentage: float, p_text: str) -> None:
         """Notify all registered progress callbacks with the current progress.
 
         This method iterates through all registered callbacks and calls each one with
         the provided progress information.
 
         Args:
-            progress: The current progress of the agent.
+            p_percentage: The current progress percentage, ranging from 0.0 to 1.0.
+            p_text: A text description of the current progress step.
         """
+        progress = DeepResearchProgress(
+            progress_text=p_text,
+            progress_percentage=p_percentage,
+        )
         for callback in self.progress_callbacks:
             callback(progress)
 
@@ -160,22 +165,16 @@ class DeepResearchAgent:
             Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
             returns the result.
         """
-        self._notify_progress(
-            DeepResearchProgress(
-                progress_text="Planning search steps",
-                progress_percentage=0.0,
-            )
-        )
+        self._notify_progress(0.0, "Planning search steps")
+
         response = await agents.Runner.run(
             self.agents["Planner"],
             input=query,
         )
         search_plan = response.final_output_as(SearchPlan)
         self._notify_progress(
-            DeepResearchProgress(
-                progress_text=f"Planning search steps completed: {len(search_plan.search_steps)} steps",
-                progress_percentage=0.1,
-            )
+            0.1,
+            f"Planning search steps completed: {len(search_plan.search_steps)} steps",
         )
 
         total_steps = len(search_plan.search_steps)
@@ -184,10 +183,8 @@ class DeepResearchAgent:
         # TODO: Use threads or asyncio.gather to parallelize search requests
         for search_item in search_plan.search_steps:
             self._notify_progress(
-                DeepResearchProgress(
-                    progress_text=f"Searching for '{search_item.search_term}' ({len(search_results) + 1}/{total_steps})",
-                    progress_percentage=0.1 + (len(search_results) / total_steps) * 0.8,
-                )
+                0.1 + ((len(search_results) + 1) / total_steps) * 0.6,
+                f"Searching for '{search_item.search_term}' ({len(search_results) + 1}/{total_steps})",
             )
 
             search_response = await agents.Runner.run(
@@ -196,17 +193,17 @@ class DeepResearchAgent:
             )
             search_results.append(search_response.final_output_as(str))
 
+        self._notify_progress(
+            0.8,
+            f"Search completed: {len(search_results)} results found",
+        )
+
         evidences = "\n".join(
             f"{i + 1:d}. {result}" for i, result in enumerate(search_results)
         )
         synthesizer_input = f"Question: {query}\n\nEvidence:\n{evidences}"
 
-        self._notify_progress(
-            DeepResearchProgress(
-                progress_text="Synthesizing final answer",
-                progress_percentage=0.9,
-            )
-        )
+        self._notify_progress(0.9, "Synthesizing final answer")
 
         return await agents.Runner.run(
             self.agents["Synthesizer"],

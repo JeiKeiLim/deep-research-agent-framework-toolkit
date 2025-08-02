@@ -3,4 +3,4 @@ configs:
   model: "gemini-2.5-flash"
   prompt: "prompts/planner.txt"
   prompt_args:
-    max_steps: 5
+    max_steps: 10
