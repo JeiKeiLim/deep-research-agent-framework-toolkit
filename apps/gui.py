@@ -7,14 +7,15 @@ Author: Jongkuk Lim
 Contact: lim.jeikei@gmail.com
 """
 
-from typing import AsyncGenerator, List
+import asyncio
+from typing import AsyncGenerator, List, Tuple
 
 import gradio as gr
 import hydra
 from gradio.components.chatbot import ChatMessage
 from omegaconf import DictConfig
 
-from src.draft_agents.agent import DeepResearchAgent
+from src.draft_agents.agent import DeepResearchAgent, DeepResearchProgress
 
 
 class DeepResearchAgentGUI:
@@ -27,6 +28,10 @@ class DeepResearchAgentGUI:
     def __init__(self, cfg: DictConfig) -> None:
         self.app = self._create_gui()
         self.agent = DeepResearchAgent(cfg.agents)
+        self.progress_queue = asyncio.Queue()
+        self.agent.add_progress_callback(
+            lambda progress: self.progress_queue.put_nowait(progress)
+        )
 
     def start(self) -> None:
         """Start the Gradio app."""
@@ -35,8 +40,10 @@ class DeepResearchAgentGUI:
         )
 
     async def _process_query(
-        self, query: str, gr_messages: list[ChatMessage]
-    ) -> AsyncGenerator[List[ChatMessage], None]:
+        self,
+        query: str,
+        gr_messages: list[ChatMessage],
+    ) -> AsyncGenerator[Tuple[List[ChatMessage], str], None]:
         """Process the user's question and return the updated chat messages.
 
         This function simulates an asynchronous query processing, appending
@@ -57,13 +64,29 @@ class DeepResearchAgentGUI:
                 content=query,
             )
         )
-        yield gr_messages
+        yield gr_messages, "Thinking..."
 
-        agent_result = await self.agent.query(query)
+        agent_task = asyncio.create_task(self.agent.query(query))
+
+        while not agent_task.done():
+            try:
+                progress: DeepResearchProgress = await asyncio.wait_for(
+                    self.progress_queue.get(), timeout=0.1
+                )
+
+                progress_text = (
+                    f"Progress: {progress.progress_percentage:.1%} - "
+                    f"{progress.progress_text}"
+                )
+                yield gr_messages, progress_text
+            except asyncio.TimeoutError:
+                pass
+
+        agent_result = await agent_task
         gr_messages.append(
             ChatMessage(role="assistant", content=agent_result.final_output_as(str))
         )
-        yield gr_messages
+        yield gr_messages, ""
 
     def _create_gui(self) -> gr.Blocks:
         """Create and return the Gradio app."""
@@ -74,7 +97,15 @@ class DeepResearchAgentGUI:
             )
             chatbot = gr.Chatbot(type="messages", label="Agent", height=600)
             chat_message = gr.Textbox(lines=1, label="Ask a question", submit_btn=True)
-            chat_message.submit(self._process_query, [chat_message, chatbot], [chatbot])
+            self._progress_details = gr.Markdown()
+
+            chat_message.submit(
+                self._process_query,
+                [chat_message, chatbot],
+                [chatbot, self._progress_details],
+            )
+
+            self._progress_details = gr.Markdown()
 
             return app
 

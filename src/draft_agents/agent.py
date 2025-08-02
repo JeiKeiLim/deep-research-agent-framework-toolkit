@@ -9,11 +9,13 @@ Contact: lim.jeikei@gmail.com
 """
 
 import os
+from typing import Callable
 
 import agents
 from agents.result import RunResult
 from omegaconf import DictConfig
 from openai import AsyncOpenAI
+from pydantic import BaseModel
 
 from src.draft_agents.function_tools import function_tools
 from src.draft_agents.output_types import SearchPlan, output_types
@@ -76,6 +78,21 @@ def agent_config_to_agent(
     )
 
 
+class DeepResearchProgress(BaseModel):
+    """Progress of the Deep Research Agent.
+
+    This class is used to track the progress of the Deep Research Agent during its
+    operations.
+    """
+
+    progress_text: str
+    """Text description of the current progress step."""
+
+    progress_percentage: float
+    """Percentage of completion for the current progress step,
+    ranging from 0.0 to 1.0."""
+
+
 class DeepResearchAgent:
     """Deep Research Agent."""
 
@@ -90,6 +107,47 @@ class DeepResearchAgent:
             key: agent_config_to_agent(value, self._async_openai_client)
             for key, value in agents_config.items()
         }
+        self.progress_callbacks = []
+
+    def add_progress_callback(
+        self, callback: Callable[[DeepResearchProgress], None]
+    ) -> None:
+        """Add a progress callback to the agent.
+
+        This method allows external code to register a callback function that will be
+        called with the current progress of the agent.
+
+        Args:
+            callback: A callable that takes a DeepResearchProgress object as an
+            argument.
+        """
+        self.progress_callbacks.append(callback)
+
+    def remove_progress_callback(
+        self, callback: Callable[[DeepResearchProgress], None]
+    ) -> None:
+        """Remove a progress callback from the agent.
+
+        This method allows external code to unregister a previously registered
+        callback function.
+
+        Args:
+            callback: A callable that was previously registered as a progress callback.
+        """
+        if callback in self.progress_callbacks:
+            self.progress_callbacks.remove(callback)
+
+    def _notify_progress(self, progress: DeepResearchProgress) -> None:
+        """Notify all registered progress callbacks with the current progress.
+
+        This method iterates through all registered callbacks and calls each one with
+        the provided progress information.
+
+        Args:
+            progress: The current progress of the agent.
+        """
+        for callback in self.progress_callbacks:
+            callback(progress)
 
     async def query(self, query: str) -> RunResult:
         """Process a query using the configured agents.
@@ -104,15 +162,36 @@ class DeepResearchAgent:
             Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
             returns the result.
         """
+        self._notify_progress(
+            DeepResearchProgress(
+                progress_text="Planning search steps",
+                progress_percentage=0.0,
+            )
+        )
         response = await agents.Runner.run(
             self.agents["Planner"],
             input=query,
         )
         search_plan = response.final_output_as(SearchPlan)
+        self._notify_progress(
+            DeepResearchProgress(
+                progress_text=f"Planning search steps completed: {len(search_plan.search_steps)} steps",
+                progress_percentage=0.1,
+            )
+        )
+
+        total_steps = len(search_plan.search_steps)
 
         search_results = []
         # TODO: Use threads or asyncio.gather to parallelize search requests
         for search_item in search_plan.search_steps:
+            self._notify_progress(
+                DeepResearchProgress(
+                    progress_text=f"Searching for '{search_item.search_term}' ({len(search_results) + 1}/{total_steps})",
+                    progress_percentage=0.1 + (len(search_results) / total_steps) * 0.8,
+                )
+            )
+
             search_response = await agents.Runner.run(
                 self.agents["Search"],
                 input=search_item.search_term,
@@ -123,6 +202,13 @@ class DeepResearchAgent:
             f"{i + 1:d}. {result}" for i, result in enumerate(search_results)
         )
         synthesizer_input = f"Question: {query}\n\nEvidence:\n{evidences}"
+
+        self._notify_progress(
+            DeepResearchProgress(
+                progress_text="Synthesizing final answer",
+                progress_percentage=0.9,
+            )
+        )
 
         return await agents.Runner.run(
             self.agents["Synthesizer"],
