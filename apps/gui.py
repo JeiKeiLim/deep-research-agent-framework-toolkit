@@ -16,6 +16,7 @@ from gradio.components.chatbot import ChatMessage
 from omegaconf import DictConfig
 
 from src.draft_agents.agent import DeepResearchAgent, DeepResearchProgress
+from src.utils import setup_langfuse_tracer
 
 
 class DeepResearchAgentGUI:
@@ -145,6 +146,7 @@ class DeepResearchAgentGUI:
 @hydra.main(version_base=None, config_path="../configs", config_name="config")
 def main(cfg: DictConfig) -> None:
     """Load the configuration using Hydra."""
+    setup_langfuse_tracer()
     gui_app = DeepResearchAgentGUI(cfg)
     gui_app.start()
 
