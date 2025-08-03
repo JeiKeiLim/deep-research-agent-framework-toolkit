@@ -1,10 +1,8 @@
 """Implements a tool for searching with the Perplexity API."""
 
 import asyncio
-import json
 import logging
 import os
-import re
 from typing import Any
 
 import backoff
@@ -35,7 +33,12 @@ class _Choice(pydantic.BaseModel):
 class _PerplexityResponse(pydantic.BaseModel):
     """Type hints for the Perplexity API response."""
 
+    citations: list[str]
+    """Citation URLs from the choices."""
+
     choices: list[_Choice]
+    """List of choices returned by the model."""
+
     usage: dict[str, Any] | None = None
 
 
@@ -134,91 +137,14 @@ class AsyncPerplexitySearch:
         if parsed_response.choices:
             content = parsed_response.choices[0].message.content
 
-        urls = self._extract_urls(parsed_response, content)
-
         if os.getenv("DEBUG_PERPLEXITY", "false").lower() == "true":
-            self.logger.debug(f"DEBUG: Extracted {len(urls)} URLs from content")
-            self.logger.debug(f"DEBUG: URLs: {urls}")
             self.logger.debug(f"DEBUG: Content preview: {content[:200]}...")
 
         return PerplexitySearchResult(
             content=content,
-            urls=urls,
+            urls=parsed_response.citations,
             raw_response=parsed_response,
         )
-
-    def _extract_urls(self, response: _PerplexityResponse, content: str) -> list[str]:
-        """Extract URLs from Perplexity API response.
-
-        Parameters
-        ----------
-        response : _PerplexityResponse
-            The parsed Perplexity API response.
-        content : str
-            The content from the response.
-
-        Returns
-        -------
-        list[str]
-            A list of unique URLs found in the response.
-        """
-        urls = []
-
-        # Method 1: Extract URLs from content text
-        content_urls = re.findall(r'https?://[^\s<>"\']+', content)
-        urls.extend(content_urls)
-
-        if not response.choices:
-            return list(set(urls))
-
-        choice = response.choices[0]
-
-        # Method 2: Check for tool_calls in response
-        if choice.message and choice.message.tool_calls:
-            for tool_call in choice.message.tool_calls:
-                if (
-                    tool_call.get("type") == "function"
-                    and tool_call.get("function", {}).get("name") == "search"
-                ):
-                    try:
-                        args = json.loads(tool_call["function"]["arguments"])
-                        if "urls" in args:
-                            urls.extend(args["urls"])
-                    except (json.JSONDecodeError, TypeError):
-                        pass
-
-        # Method 3: Check for usage field which might contain source URLs
-        if response.usage:
-            # Some APIs include source URLs in usage metadata
-            pass
-
-        # Method 4: Check for additional fields that might contain URLs
-        def find_urls_in_dict(d: dict[str, Any]) -> list[str]:
-            found_urls = []
-            for _, v in d.items():
-                if isinstance(v, str) and "http" in v:
-                    found_urls.extend(re.findall(r'https?://[^\s<>"\']+', v))
-                elif isinstance(v, dict):
-                    found_urls.extend(find_urls_in_dict(v))
-                elif isinstance(v, list):
-                    for item in v:
-                        if isinstance(item, dict):
-                            found_urls.extend(find_urls_in_dict(item))
-            return found_urls
-
-        # The choice object is a pydantic model, so we dump it to a dict
-        choice_dict = choice.model_dump()
-        for key, value in choice_dict.items():
-            if key not in ["message", "index", "finish_reason"]:
-                if isinstance(value, str) and "http" in value:
-                    additional_urls = re.findall(r'https?://[^\s<>"\']+', value)
-                    urls.extend(additional_urls)
-                elif isinstance(value, dict):
-                    urls.extend(find_urls_in_dict(value))
-
-        # Remove duplicates and clean URLs
-        unique_urls = list(set(urls))
-        return [url.rstrip(".,;:!?") for url in unique_urls]
 
 
 def get_perplexity_async_client(

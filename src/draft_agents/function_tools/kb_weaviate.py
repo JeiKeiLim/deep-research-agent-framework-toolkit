@@ -18,7 +18,10 @@ class _Source(pydantic.BaseModel):
     """Type hints for the "_source" field in ES Search Results."""
 
     title: str
+    """The title of the source document."""
+
     section: str | None = None
+    """The section of the source document, if available."""
 
 
 class _Highlight(pydantic.BaseModel):
@@ -30,8 +33,11 @@ class _Highlight(pydantic.BaseModel):
 class _SearchResult(pydantic.BaseModel):
     """Type hints for knowledge base search result."""
 
-    source: _Source = pydantic.Field(alias="_source")
+    source: _Source
+    """The source of the search result, containing title and section."""
+
     highlight: _Highlight
+    """The highlight of the search result, containing text snippets."""
 
     def __repr__(self) -> str:
         return self.model_dump_json(indent=2)
@@ -110,7 +116,7 @@ class AsyncWeaviateKnowledgeBase:
         hits = []
         for obj in response.objects:
             hit = {
-                "_source": {
+                "source": {
                     "title": obj.properties.get("title", ""),
                     "section": obj.properties.get("section", None),
                 },
