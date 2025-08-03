@@ -32,7 +32,7 @@ class DeepResearchAgentGUI:
             cfg: The configuration dictionary for the agent.
         """
         self.app = self._create_gui()
-        self.agent = DeepResearchAgent(cfg.agents)
+        self.agent = DeepResearchAgent(cfg.agents, **cfg.agent_configs)
         self.progress_queue = asyncio.Queue()
         self.agent.add_progress_callback(
             lambda progress: self.progress_queue.put_nowait(progress)

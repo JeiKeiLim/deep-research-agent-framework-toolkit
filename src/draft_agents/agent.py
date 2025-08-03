@@ -94,11 +94,12 @@ class DeepResearchProgress(BaseModel):
 class DeepResearchAgent:
     """Deep Research Agent."""
 
-    def __init__(self, agents_config: DictConfig) -> None:
+    def __init__(self, agents_config: DictConfig, max_revision: int = 3) -> None:
         """Initialize the Deep Research Agent with the provided configuration.
 
         Args:
             agents_config: Configuration for the agents.
+            max_revision: Maximum number of revisions for the agent's output.
         """
         self._async_openai_client = AsyncOpenAI()
         self.agents = {
@@ -106,6 +107,7 @@ class DeepResearchAgent:
             for key, value in agents_config.items()
         }
         self.progress_callbacks = []
+        self.max_revision = max_revision
 
     def add_progress_callback(
         self, callback: Callable[[DeepResearchProgress], None]
@@ -165,62 +167,109 @@ class DeepResearchAgent:
             Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
             returns the result.
         """
-        self._notify_progress(0.0, "Planning search steps")
-
-        response = await agents.Runner.run(
-            self.agents["Planner"],
-            input=query,
-        )
-        search_plan = response.final_output_as(SearchPlan)
-        self._notify_progress(
-            0.1,
-            f"Planning search steps completed: {len(search_plan.search_steps)} steps",
-        )
-
-        total_steps = len(search_plan.search_steps)
-
+        revision_count = 0
+        previous_answer = "Initial state, no answer yet"
+        critic_feedback_str = "Initial state, no feedback yet"
         search_results = []
-        # TODO: Use threads or asyncio.gather to parallelize search requests
-        for search_item in search_plan.search_steps:
+
+        synthesized_answer: RunResult | None = None
+
+        while revision_count < self.max_revision:
+            revision_header_str = f"R[{revision_count + 1:d}/{self.max_revision:d}]"
+            self._notify_progress(0.0, f"{revision_header_str} Planning search steps")
+            revision_count += 1
+
+            planner_input = f"""Question: {query}
+
+            Previous Answer: {previous_answer}
+
+            Critic Feedback: {critic_feedback_str}
+            """
+            response = await agents.Runner.run(
+                self.agents["Planner"],
+                input=planner_input,
+            )
+            search_plan = response.final_output_as(SearchPlan)
             self._notify_progress(
-                0.1 + ((len(search_results) + 1) / total_steps) * 0.6,
-                f"Searching for '{search_item.search_term}' ({len(search_results) + 1}/{total_steps})",
+                0.1,
+                f"{revision_header_str} Planning search steps completed: {len(search_plan.search_steps)} steps",
             )
 
-            search_response = await agents.Runner.run(
-                self.agents["Search"],
-                input=search_item.search_term,
+            total_steps = len(search_plan.search_steps)
+            local_search_results = []
+
+            # TODO: Use threads or asyncio.gather to parallelize search requests
+            for search_item in search_plan.search_steps:
+                self._notify_progress(
+                    0.1 + ((len(local_search_results) + 1) / total_steps) * 0.6,
+                    f"{revision_header_str} Searching for '{search_item.search_term}' ({len(local_search_results) + 1}/{total_steps})",
+                )
+
+                search_response = await agents.Runner.run(
+                    self.agents["Search"],
+                    input=search_item.search_term,
+                )
+                local_search_results.append(search_response.final_output_as(str))
+
+            self._notify_progress(
+                0.8,
+                f"{revision_header_str} Search completed: {len(local_search_results)} results found",
             )
-            search_results.append(search_response.final_output_as(str))
+            search_results.extend(local_search_results)
 
-        self._notify_progress(
-            0.8,
-            f"Search completed: {len(search_results)} results found",
-        )
+            evidences = "\n".join(
+                f"{i + 1:d}. {result}" for i, result in enumerate(search_results)
+            )
+            synthesizer_input = f"""Question: {query}
 
-        evidences = "\n".join(
-            f"{i + 1:d}. {result}" for i, result in enumerate(search_results)
-        )
-        synthesizer_input = f"Question: {query}\n\nEvidence:\n{evidences}"
+            Evidence:
+            {evidences}
 
-        self._notify_progress(0.9, "Synthesizing final answer")
+            Previous Answer: {previous_answer}
 
-        synthesizer_response = await agents.Runner.run(
-            self.agents["Synthesizer"],
-            input=synthesizer_input,
-        )
-        synthesized_answer = synthesizer_response.final_output_as(str)
+            Critic Feedback: {critic_feedback_str}
+            """
 
-        critic_response = await agents.Runner.run(
-            self.agents["Critic"],
-            input=f"""Query**: {query}
+            self._notify_progress(
+                0.9, f"{revision_header_str} Synthesizing final answer"
+            )
 
-            **Answer**: {synthesized_answer}
+            synthesizer_response = await agents.Runner.run(
+                self.agents["Synthesizer"],
+                input=synthesizer_input,
+            )
+            synthesized_answer = synthesizer_response.final_output_as(str)
 
-            **Evidence**: {evidences}
-            """,
-        )
-        critic_feedback = critic_response.final_output_as(CriticFeedback)  # noqa
-        # TODO: Make a loop to improve the answer based on critic feedback
+            critic_response = await agents.Runner.run(
+                self.agents["Critic"],
+                input=f"""Query**: {query}
 
-        return synthesizer_response
+                **Answer**: {synthesized_answer}
+
+                **Evidence**: {evidences}
+                """,
+            )
+            critic_feedback = critic_response.final_output_as(CriticFeedback)  # noqa
+
+            # TODO: Make a loop to improve the answer based on critic feedback
+
+            if not critic_feedback.needs_revision:
+                return synthesizer_response
+
+            previous_answer = synthesized_answer
+            critic_feedback_str = f"""Previous answer has following issues:
+            {critic_feedback.issues}
+
+            Suggestions for improvement:
+            {critic_feedback.suggestions}
+            """
+
+            if revision_count >= self.max_revision:
+                return synthesizer_response
+
+        if synthesized_answer is None:
+            raise ValueError(
+                "Synthesized answer is None after maximum revisions reached."
+            )
+
+        return synthesized_answer
