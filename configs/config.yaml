@@ -3,4 +3,8 @@ defaults:
   - agents/planner@agents.Planner
   - agents/synthesizer@agents.Synthesizer
   - agents/search@agents.Search
+  - agents/critic@agents.Critic
   - _self_
+
+agent_configs:
+  max_revision: 3
