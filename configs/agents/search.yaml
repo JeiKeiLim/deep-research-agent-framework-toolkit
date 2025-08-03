@@ -4,3 +4,4 @@ configs:
   prompt: "prompts/search.txt"
   function_tools:
     - kb_weaviate
+    - perplexity_search

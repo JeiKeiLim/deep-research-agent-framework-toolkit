@@ -19,7 +19,12 @@ from openai import AsyncOpenAI
 from pydantic import BaseModel
 
 from src.draft_agents.function_tools import function_tools
-from src.draft_agents.output_types import CriticFeedback, SearchPlan, output_types
+from src.draft_agents.output_types import (
+    CriticFeedback,
+    SearchItem,
+    SearchPlan,
+    output_types,
+)
 from src.utils.langfuse.shared_client import langfuse_client
 
 
@@ -59,7 +64,7 @@ def agent_config_to_agent(
     tools = []
     if "function_tools" in config.configs:
         tools: List[agents.Tool] = [
-            agents.function_tool(function_tools[tool_name])
+            agents.function_tool(function_tools[tool_name], name_override=tool_name)
             for tool_name in config.configs.function_tools
         ]
 
@@ -165,7 +170,9 @@ class DeepResearchAgent:
             total_steps = len(search_plan.search_steps)
             local_search_results = []
 
-            async def run_search(search_item):
+            async def run_search(
+                search_item: SearchItem,
+            ) -> tuple[SearchItem, RunResult | None]:
                 with search_span.start_as_current_span(
                     name="DeepResearchAgentFrameworkToolkit._run_search.run_search",
                     input=search_item.search_term,
@@ -174,7 +181,20 @@ class DeepResearchAgent:
                         response = await agents.Runner.run(
                             self.agents["Search"], input=search_item.search_term
                         )
-                        search_item_span.update(output=response.final_output_as(str))
+                        search_result = response.final_output_as(str)
+                        # Extracting tools used in the search
+                        tools_used = []
+                        for m_res in response.raw_responses:
+                            for res_out in m_res.output:
+                                if hasattr(res_out, "call_id") and hasattr(
+                                    res_out, "name"
+                                ):
+                                    tools_used.append(res_out.name)
+
+                        search_item_span.update(
+                            output=search_result,
+                            metadata={"tools_used": tools_used},
+                        )
                     except Exception as e:
                         print(
                             f"Error during search for '{search_item.search_term}': {str(e)}"
