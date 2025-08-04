@@ -292,13 +292,13 @@ class DeepResearchAgent:
                     search_results.extend(local_search_results)
 
                     evidences = "\n".join(
-                        f"{i + 1:d}. {result}"
+                        f"## Evidence {i + 1:d}\n{result}"
                         for i, result in enumerate(search_results)
                     )
                     synthesizer_input = f"""Question:
                     {query}
 
-                    Evidence:
+                    # Evidences:
                     {evidences}
 
                     Previous Answer:
@@ -344,8 +344,6 @@ class DeepResearchAgent:
                             CriticFeedback
                         )  # noqa
                         critic_span.update(output=critic_feedback)
-
-                    # TODO: Make a loop to improve the answer based on critic feedback
 
                     if not critic_feedback.needs_revision:
                         agent_span.update(output=synthesized_answer)
