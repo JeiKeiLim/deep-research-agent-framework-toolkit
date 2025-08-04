@@ -55,7 +55,7 @@ class AsyncWeaviateKnowledgeBase:
         collection_name: str,
         num_results: int = 5,
         snippet_length: int = 1000,
-        max_concurrency: int = 3,
+        max_concurrency: int = 6,
         embedding_model_name: str = "@cf/baai/bge-m3",
         embedding_api_key: str | None = None,
         embedding_base_url: str | None = None,

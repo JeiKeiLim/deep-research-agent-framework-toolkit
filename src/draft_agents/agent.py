@@ -268,11 +268,14 @@ class DeepResearchAgent:
                 with langfuse_client.start_as_current_span(
                     name=f"DeepResearchAgentFrameworkToolkit.query.{revision_header_str}",
                 ) as revision_span:
-                    planner_input = f"""Question: {query}
+                    planner_input = f"""Question:
+                    {query}
 
-                    Previous Answer: {previous_answer}
+                    Previous Answer:
+                    {previous_answer}
 
-                    Critic Feedback: {critic_feedback_str}
+                    Critic Feedback:
+                    {critic_feedback_str}
                     """
 
                     with langfuse_client.start_as_current_span(
