@@ -179,11 +179,13 @@ class DeepResearchAgent:
                 ) as search_item_span:
                     try:
                         response = await agents.Runner.run(
-                            self.agents["Search"], input=search_item.search_term
+                            self.agents["Search"],
+                            input=search_item.model_dump_json(indent=2),
                         )
                         search_result = response.final_output_as(str)
                         # Extracting tools used in the search
                         tools_used = []
+                        tool_args = []
                         for m_res in response.raw_responses:
                             for res_out in m_res.output:
                                 if hasattr(res_out, "call_id") and hasattr(
@@ -191,9 +193,12 @@ class DeepResearchAgent:
                                 ):
                                     tools_used.append(res_out.name)
 
+                                    if hasattr(res_out, "arguments"):
+                                        tool_args.append(res_out.arguments)
+
                         search_item_span.update(
                             output=search_result,
-                            metadata={"tools_used": tools_used},
+                            metadata={"tools_used": tools_used, "tool_args": tool_args},
                         )
                     except Exception as e:
                         print(
