@@ -1,4 +1,5 @@
 name: "Planner"
+description: "Planner agent for task planning and execution"
 configs:
   model: "gemini-2.5-flash"
   prompt: "prompts/planner.txt"

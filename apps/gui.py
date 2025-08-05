@@ -78,7 +78,7 @@ class DeepResearchAgentGUI:
             ),
         }
 
-        agent_task = asyncio.create_task(self.agent.query(query))
+        agent_task = asyncio.create_task(self.agent.query2(query))
 
         while not agent_task.done():
             try:

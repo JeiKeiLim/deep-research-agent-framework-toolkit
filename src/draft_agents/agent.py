@@ -29,7 +29,8 @@ from src.utils.langfuse.shared_client import langfuse_client
 
 
 def agent_config_to_agent(
-    config: DictConfig, openai_client: AsyncOpenAI
+    config: DictConfig,
+    openai_client: AsyncOpenAI,
 ) -> agents.Agent:
     """Convert a DictConfig to an Agent instance.
 
@@ -83,6 +84,57 @@ def agent_config_to_agent(
     )
 
 
+def create_main_agent(
+    agents_config: DictConfig, openai_client: AsyncOpenAI
+) -> agents.Agent:
+    """Create the main agent based on the provided configuration.
+
+    This function initializes the main agent using the configuration dictionary,
+    converting each agent configuration into an agent instance and setting up the
+    necessary tools and model settings.
+
+    TODO: Make the function cleaner
+
+    Args:
+        agents_config: The configuration dictionary for the agents.
+        openai_client: The OpenAI client to be used by the agents.
+
+    Returns
+    -------
+        agents.Agent: An instance of the main Agent class configured with the
+        provided settings.
+    """
+    tools = [
+        agent_config_to_agent(agent_config, openai_client).as_tool(
+            tool_name=agent_name, tool_description=agent_config.description
+        )
+        for agent_name, agent_config in agents_config.items()
+        if agent_name != "Main"
+    ]
+    prompt = agents_config.Main.configs.prompt
+
+    if os.path.exists(prompt):
+        with open(prompt, "r") as file:
+            prompt = file.read()
+
+    if "prompt_args" in agents_config.Main.configs:
+        for key, value in agents_config.Main.configs.prompt_args.items():
+            prompt = prompt.replace(f"{{{key}}}", str(value))
+
+    return agents.Agent(
+        name="Main Agent",
+        instructions=prompt,
+        model=agents.OpenAIChatCompletionsModel(
+            model=agents_config.Main.configs.model, openai_client=openai_client
+        ),
+        tools=tools,
+        output_type=output_types.get("Main", None),
+        model_settings=agents.ModelSettings(
+            tool_choice="required",
+        ),
+    )
+
+
 class DeepResearchProgress(BaseModel):
     """Progress of the Deep Research Agent.
 
@@ -109,9 +161,11 @@ class DeepResearchAgent:
             max_revision: Maximum number of revisions for the agent's output.
         """
         self._async_openai_client = AsyncOpenAI()
+        self.main_agent = create_main_agent(agents_config, self._async_openai_client)
         self.agents = {
             key: agent_config_to_agent(value, self._async_openai_client)
             for key, value in agents_config.items()
+            if key != "Main"
         }
         self.progress_callbacks = []
         self.max_revision = max_revision
@@ -234,6 +288,28 @@ class DeepResearchAgent:
             search_span.update(output=local_search_results)
 
             return local_search_results
+
+    async def query2(self, query: str) -> RunResult:
+        """Process a query using the configured agents.
+
+        This method runs asynchronously and processes the provided query
+
+        Args:
+            query: The query to process.
+
+        Returns
+        -------
+            Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
+            returns the result.
+        """
+        with langfuse_client.start_as_current_span(
+            name="DeepResearchAgentFrameworkToolkit.query", input=query
+        ) as agent_span:
+            response = await agents.Runner.run(
+                self.main_agent, input=query, max_turns=999
+            )
+            agent_span.update(output=response.final_output_as(str))
+            return response
 
     async def query(self, query: str) -> RunResult:
         """Process a query using the configured agents.

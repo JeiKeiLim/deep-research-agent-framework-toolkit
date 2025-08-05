@@ -1,6 +1,11 @@
 name: "Main"
 sub_agents:
   - Planner
+  - Critic
+  - Search
+  - Synthesizer
 configs:
   model: "gemini-2.5-flash"
-  prompt: "You are a helpful assistant. Your task is to answer questions based on the provided context. If the answer is not in the context, respond with 'I don't know'."
+  prompt: prompts/main.txt
+  prompt_args:
+    max_revision: 3
