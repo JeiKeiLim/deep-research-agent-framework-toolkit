@@ -1,9 +1,11 @@
+defaults:
+  - planner@sub_agents.Planner
+  - synthesizer@sub_agents.Synthesizer
+  - search@sub_agents.Search
+  - critic@sub_agents.Critic
+  - _self_
+
 name: "Main"
-sub_agents:
-  - Planner
-  - Critic
-  - Search
-  - Synthesizer
 configs:
   model: "gemini-2.5-flash"
   prompt: prompts/main.txt

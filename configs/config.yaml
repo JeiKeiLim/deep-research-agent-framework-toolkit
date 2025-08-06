@@ -8,3 +8,4 @@ defaults:
 
 agent_configs:
   max_revision: 3
+  orchestration_mode: "sequential"  # "agent" or "sequential"
