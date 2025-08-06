@@ -1,4 +1,5 @@
 name: "Critic"
+description: "Evaluates the quality of the response and provides feedback."
 configs:
   model: "gemini-2.5-flash"
   prompt: "prompts/critic.txt"

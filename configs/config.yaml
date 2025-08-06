@@ -6,7 +6,14 @@ defaults:
   - agents/perplexity_tool@agents.PerplexityTool
   # - agents/search@agents.Search
   - agents/critic@agents.Critic
+  - agents/evaluator@evaluator
   - _self_
 
 agent_configs:
   max_revision: 3
+  orchestration_mode: "agent"  # "agent" or "sequential"
+
+evaluation_configs:
+  langfuse_dataset_name: "test_questions"
+  run_name: "2025_0806_test_run_02"
+  limit: -1
