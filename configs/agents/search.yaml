@@ -1,4 +1,5 @@
 name: "Search"
+description: "Searches for relevant information to answer the user's query."
 configs:
   model: "gemini-2.5-flash-lite-preview-06-17"
   prompt: "prompts/search.txt"

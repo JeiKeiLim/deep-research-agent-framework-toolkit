@@ -10,7 +10,7 @@ Contact: lim.jeikei@gmail.com
 
 import asyncio
 import os
-from typing import Callable, List
+from typing import Callable, List, Literal
 
 import agents
 from agents.result import RunResult
@@ -29,7 +29,8 @@ from src.utils.langfuse.shared_client import langfuse_client
 
 
 def agent_config_to_agent(
-    config: DictConfig, openai_client: AsyncOpenAI
+    config: DictConfig,
+    openai_client: AsyncOpenAI,
 ) -> agents.Agent:
     """Convert a DictConfig to an Agent instance.
 
@@ -68,6 +69,16 @@ def agent_config_to_agent(
             for tool_name in config.configs.function_tools
         ]
 
+    if "sub_agents" in config:
+        for sub_agent_name, sub_agent_config in config.sub_agents.items():
+            sub_agent = agent_config_to_agent(sub_agent_config, openai_client)
+            tools.append(
+                sub_agent.as_tool(
+                    tool_name=sub_agent_name,
+                    tool_description=sub_agent_config.description,
+                )
+            )
+
     if tools:
         model_settings.tool_choice = "required"
 
@@ -101,13 +112,19 @@ class DeepResearchProgress(BaseModel):
 class DeepResearchAgent:
     """Deep Research Agent."""
 
-    def __init__(self, agents_config: DictConfig, max_revision: int = 3) -> None:
+    def __init__(
+        self,
+        agents_config: DictConfig,
+        max_revision: int = 3,
+        orchestration_mode: Literal["agent", "sequential"] = "agent",
+    ) -> None:
         """Initialize the Deep Research Agent with the provided configuration.
 
         Args:
             agents_config: Configuration for the agents.
             max_revision: Maximum number of revisions for the agent's output.
         """
+        self.orchestration_mode = orchestration_mode
         self._async_openai_client = AsyncOpenAI()
         self.agents = {
             key: agent_config_to_agent(value, self._async_openai_client)
@@ -248,6 +265,49 @@ class DeepResearchAgent:
             Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
             returns the result.
         """
+        if self.orchestration_mode == "agent":
+            return await self._query_agent(query)
+        return await self._query_sequential(query)
+
+    async def _query_agent(self, query: str) -> RunResult:
+        """Process a query using the configured agents.
+
+        This method runs asynchronously and processes the provided query using the
+        main agent, allowing for a more streamlined and efficient query handling.
+        It utilizes the `agents.Runner` to execute the main agent with the given query.
+
+        Args:
+            query: The query to process.
+
+        Returns
+        -------
+            Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
+            returns the result.
+        """
+        with langfuse_client.start_as_current_span(
+            name="DeepResearchAgentFrameworkToolkit.query_agent", input=query
+        ) as agent_span:
+            response = await agents.Runner.run(
+                self.agents["Main"], input=query, max_turns=999
+            )
+            agent_span.update(output=response.final_output_as(str))
+            return response
+
+    async def _query_sequential(self, query: str) -> RunResult:
+        """Process a query using the configured agents.
+
+        This method runs asynchronously and processes the provided query in a
+        sequential manner, allowing for multiple revisions and feedback from the
+        critic agent.
+
+        Args:
+            query: The query to process.
+
+        Returns
+        -------
+            Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
+            returns the result.
+        """
         revision_count = 0
         previous_answer = "Initial state, no answer yet"
         critic_feedback_str = "Initial state, no feedback yet"
@@ -256,7 +316,7 @@ class DeepResearchAgent:
         synthesizer_response: RunResult | None = None
 
         with langfuse_client.start_as_current_span(
-            name="DeepResearchAgentFrameworkToolkit.query", input=query
+            name="DeepResearchAgentFrameworkToolkit.query_sequential", input=query
         ) as agent_span:
             while revision_count < self.max_revision:
                 revision_header_str = f"R[{revision_count + 1:d}/{self.max_revision:d}]"
