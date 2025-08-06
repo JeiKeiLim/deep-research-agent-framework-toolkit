@@ -176,6 +176,12 @@ PYTHONPATH=. uv run --env-file .env pytest tests/tool_tests/test_integration.py 
 2. Register in `src/draft_agents/function_tools/__init__.py`
 3. Update agent configurations to use the new tool
 
+## Evaluation
+### Upload dataset
+```bash
+PYTHONPATH=. uv run --env-file .env evals/upload_data.py --source_dataset ./evals/datasets/test_dataset.jsonl --langfuse_dataset_name test_questions
+```
+
 ## Technologies Used
 
 - **AI Framework**: OpenAI Agents Framework
