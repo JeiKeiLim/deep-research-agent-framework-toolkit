@@ -2,7 +2,9 @@ defaults:
   - agents/main@agents.Main
   - agents/planner@agents.Planner
   - agents/synthesizer@agents.Synthesizer
-  - agents/search@agents.Search
+  - agents/weaviate_tool@agents.WeaviateTool 
+  - agents/perplexity_tool@agents.PerplexityTool
+  # - agents/search@agents.Search
   - agents/critic@agents.Critic
   - _self_
 
