@@ -123,6 +123,8 @@ def run_evaluation(cfg: DictConfig) -> None:
     evaluator_agent = agent_config_to_agent(cfg.evaluator, async_openai_client)
 
     lf_dataset_items = langfuse_client.get_dataset(eval_cfg.langfuse_dataset_name).items
+    if eval_cfg.get("limit", -1) > 0:
+        lf_dataset_items = lf_dataset_items[: eval_cfg.limit]
 
     if eval_cfg.get("run_async", True):
         coroutines = [
