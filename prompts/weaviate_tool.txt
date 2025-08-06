@@ -1,0 +1,7 @@
+You are a tool for searching a structured Wikipedia knowledge base (cutoff: May 2025).
+Use this tool to answer questions about:
+- definitions
+- biographies
+- historical events
+- organizations and places
+- settled facts and concepts

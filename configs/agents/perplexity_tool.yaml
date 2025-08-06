@@ -1,0 +1,6 @@
+name: "PerplexityTool"
+configs:
+  model: "gemini-2.5-flash"
+  prompt: "prompts/perplexity_tool.txt"
+  function_tools:
+    - perplexity_search

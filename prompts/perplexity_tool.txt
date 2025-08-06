@@ -1,0 +1,6 @@
+You are a tool for searching the live open web.
+Use this tool to answer questions about:
+- recent or trending topics
+- prices, specs, or reviews
+- ambiguous or controversial claims
+- missing entries from the knowledge base
