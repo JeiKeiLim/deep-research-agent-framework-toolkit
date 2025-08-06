@@ -22,7 +22,7 @@ load_dotenv(verbose=True)
 parser = argparse.ArgumentParser()
 parser.add_argument("--source_dataset", required=True)
 parser.add_argument("--langfuse_dataset_name", required=True)
-parser.add_argument("--limit", type=int)
+parser.add_argument("--allow-duplicates", action="store_true", default=False)
 
 
 if __name__ == "__main__":
@@ -55,5 +55,5 @@ if __name__ == "__main__":
             input={"text": row["question"]},
             expected_output={"text": row["ground_truth"]},
             # unique id to enable upsert without creating duplicates
-            id=f"{dataset_url_hash}-{idx:05}",
+            id=None if args.allow_duplicates else f"{dataset_url_hash}-{idx:05}",
         )
