@@ -123,16 +123,38 @@ def run_evaluation(cfg: DictConfig) -> None:
     evaluator_agent = agent_config_to_agent(cfg.evaluator, async_openai_client)
 
     lf_dataset_items = langfuse_client.get_dataset(eval_cfg.langfuse_dataset_name).items
+    if eval_cfg.get("limit", -1) > 0:
+        lf_dataset_items = lf_dataset_items[: eval_cfg.limit]
 
-    coroutines = [
-        run_evaluation_coroutine(
-            agent, evaluator_agent, lf_dataset_item, eval_cfg.run_name
+    if eval_cfg.get("run_async", True):
+        coroutines = [
+            run_evaluation_coroutine(
+                agent, evaluator_agent, lf_dataset_item, eval_cfg.run_name
+            )
+            for lf_dataset_item in lf_dataset_items
+        ]
+        results = asyncio.run(
+            gather_with_progress(coroutines, description="Running agent and evaluating")
         )
-        for lf_dataset_item in lf_dataset_items
-    ]
-    results = asyncio.run(
-        gather_with_progress(coroutines, description="Running agent and evaluating")
-    )
+    else:
+
+        async def run_sequential():
+            """Run evaluation sequentially."""
+            results = []
+            for lf_dataset_item in track(
+                lf_dataset_items, description="Running agent and evaluating"
+            ):
+                try:
+                    result = await run_evaluation_coroutine(
+                        agent, evaluator_agent, lf_dataset_item, eval_cfg.run_name
+                    )
+                except Exception as e:
+                    print(f"Error processing {lf_dataset_item.id}: {e}")
+                    result = None
+                results.append(result)
+            return results
+
+        results = asyncio.run(run_sequential())
 
     for _traced_response, _eval_output in track(
         results, total=len(results), description="Uploading scores"
