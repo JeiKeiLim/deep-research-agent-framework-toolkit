@@ -67,7 +67,7 @@ class AsyncPerplexitySearch:
         self,
         async_client: httpx.AsyncClient,
         model: str = "sonar",
-        max_concurrency: int = 6,
+        max_concurrency: int = 3,
         max_tokens: int = 1000,
         temperature: float = 0.1,
     ) -> None:
