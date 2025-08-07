@@ -25,6 +25,7 @@ from src.draft_agents.output_types import (
     SearchPlan,
     output_types,
 )
+from src.utils.gradio.messages import oai_agent_stream_to_str_list
 from src.utils.langfuse.shared_client import langfuse_client
 
 
@@ -287,11 +288,20 @@ class DeepResearchAgent:
         with langfuse_client.start_as_current_span(
             name="DeepResearchAgentFrameworkToolkit.query_agent", input=query
         ) as agent_span:
-            response = await agents.Runner.run(
+            response_stream = agents.Runner.run_streamed(
                 self.agents["Main"], input=query, max_turns=999
             )
-            agent_span.update(output=response.final_output_as(str))
-            return response
+            gr_messages = []
+            async for _item in response_stream.stream_events():
+                gr_messages.extend(oai_agent_stream_to_str_list(_item))
+                if len(gr_messages) > 0:
+                    self._notify_progress(
+                        0.5,
+                        f"{gr_messages[-1]}",
+                    )
+
+            agent_span.update(output=response_stream.final_output_as(str))
+            return response_stream.final_output
 
     async def _query_sequential(self, query: str) -> RunResult:
         """Process a query using the configured agents.
