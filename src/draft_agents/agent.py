@@ -13,7 +13,7 @@ import os
 from typing import Callable, List, Literal
 
 import agents
-from agents.result import RunResult
+from agents.result import RunResult, RunResultStreaming
 from omegaconf import DictConfig
 from openai import AsyncOpenAI
 from pydantic import BaseModel
@@ -253,7 +253,7 @@ class DeepResearchAgent:
 
             return local_search_results
 
-    async def query(self, query: str) -> RunResult:
+    async def query(self, query: str) -> RunResult | RunResultStreaming:
         """Process a query using the configured agents.
 
         This method runs asynchronously and processes the provided query
@@ -270,7 +270,7 @@ class DeepResearchAgent:
             return await self._query_agent(query)
         return await self._query_sequential(query)
 
-    async def _query_agent(self, query: str) -> RunResult:
+    async def _query_agent(self, query: str) -> RunResultStreaming:
         """Process a query using the configured agents.
 
         This method runs asynchronously and processes the provided query using the
@@ -285,23 +285,26 @@ class DeepResearchAgent:
             Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
             returns the result.
         """
+        progress_percentage = 0.0
         with langfuse_client.start_as_current_span(
             name="DeepResearchAgentFrameworkToolkit.query_agent", input=query
         ) as agent_span:
             response_stream = agents.Runner.run_streamed(
                 self.agents["Main"], input=query, max_turns=999
             )
-            gr_messages = []
             async for _item in response_stream.stream_events():
-                gr_messages.extend(oai_agent_stream_to_str_list(_item))
-                if len(gr_messages) > 0:
+                intermediate_messages = oai_agent_stream_to_str_list(_item)
+
+                for intermediate_message in intermediate_messages:
+                    progress_percentage += 0.01
+                    # TODO: Find a way to calculate pseudo progress_percentage
                     self._notify_progress(
-                        0.5,
-                        f"{gr_messages[-1]}",
+                        progress_percentage,
+                        f"{intermediate_message}",
                     )
 
             agent_span.update(output=response_stream.final_output_as(str))
-            return response_stream.final_output
+            return response_stream
 
     async def _query_sequential(self, query: str) -> RunResult:
         """Process a query using the configured agents.
