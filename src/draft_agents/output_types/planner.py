@@ -19,6 +19,9 @@ class SearchItem(BaseModel):
 
     reasoning: str
     """A description of the search term and its relevance to the query"""
+    
+    tool_name: str
+    """The name of the tool to use for this search. (e.g., "weaviate", "perplexity")"""
 
 
 class SearchPlan(BaseModel):

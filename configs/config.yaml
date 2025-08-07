@@ -2,7 +2,9 @@ defaults:
   - agents/main@agents.Main
   - agents/planner@agents.Planner
   - agents/synthesizer@agents.Synthesizer
-  - agents/search@agents.Search
+  - agents/weaviate_tool@agents.WeaviateTool 
+  - agents/perplexity_tool@agents.PerplexityTool
+  # - agents/search@agents.Search
   - agents/critic@agents.Critic
   - agents/evaluator@evaluator
   - _self_
@@ -13,5 +15,6 @@ agent_configs:
 
 evaluation_configs:
   langfuse_dataset_name: "test_questions"
-  run_name: "2025_0806_test_run_02"
+  run_name: "2025_0806_test_run_03"
+  run_async: False
   limit: -1

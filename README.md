@@ -182,6 +182,14 @@ PYTHONPATH=. uv run --env-file .env pytest tests/tool_tests/test_integration.py 
 PYTHONPATH=. uv run --env-file .env evals/upload_data.py --source_dataset ./evals/datasets/test_dataset.jsonl --langfuse_dataset_name test_questions
 ```
 
+### Creating ground truth
+- How did I create the ground truth?
+  - I used the `evals/datasets/test_dataset.jsonl` file to create the ground truth.
+  - The ground truth is created by asking ChatGPT o3 to generate answers for the questions in the dataset.
+    - Sometimes o3 shortens the answers, in which I used following prompt to expand the answers:
+      - `With your background research data, make the answer long and detailed.`
+    - It seems that o3 has all the background information but it choose to shorten the answers for readability.
+
 ## Technologies Used
 
 - **AI Framework**: OpenAI Agents Framework

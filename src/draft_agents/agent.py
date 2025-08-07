@@ -195,23 +195,37 @@ class DeepResearchAgent:
                     input=search_item.search_term,
                 ) as search_item_span:
                     try:
+                        # tool_name 기반으로 agent 선택
+                        tool_agent = None
+                        if search_item.tool_name.lower() == "weaviate":
+                            tool_agent = self.agents["kb_weaviate"]
+                        elif search_item.tool_name.lower() == "perplexity":
+                            tool_agent = self.agents["perplexity_search"]
+                        else:
+                            raise ValueError(f"Unknown tool_name: {search_item.tool_name}")
+                        
+                        # search_agent 대신에 tool_agent 실행 
                         response = await agents.Runner.run(
-                            self.agents["Search"],
+                            tool_agent,
                             input=search_item.model_dump_json(indent=2),
                         )
+                        
                         search_result = response.final_output_as(str)
+                        
                         # Extracting tools used in the search
-                        tools_used = []
-                        tool_args = []
-                        for m_res in response.raw_responses:
-                            for res_out in m_res.output:
-                                if hasattr(res_out, "call_id") and hasattr(
-                                    res_out, "name"
-                                ):
-                                    tools_used.append(res_out.name)
+                        tools_used = [search_item.tool_name]
+                        tool_args = [search_item.model_dump()]
+                        
+                        ## Tool 사용 정보 추적을 위해 raw_responses에서 역추적하는 로직 
+                        # for m_res in response.raw_responses:
+                        #     for res_out in m_res.output:
+                        #         if hasattr(res_out, "call_id") and hasattr(
+                        #             res_out, "name"
+                        #         ):
+                        #             tools_used.append(res_out.name)
 
-                                    if hasattr(res_out, "arguments"):
-                                        tool_args.append(res_out.arguments)
+                        #             if hasattr(res_out, "arguments"):
+                        #                 tool_args.append(res_out.arguments)
 
                         search_item_span.update(
                             output=search_result,
