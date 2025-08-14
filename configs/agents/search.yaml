@@ -5,5 +5,7 @@ configs:
   prompt: "prompts/search.txt"
   function_tools:
     - kb_weaviate
-    - perplexity_search
-    - tavily_search
+#    - perplexity_search
+#    - tavily_search
+    - mem0_search
+    - mem0_add

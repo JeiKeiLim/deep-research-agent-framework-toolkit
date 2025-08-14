@@ -3,3 +3,6 @@ description: "Synthesizer agent for generating responses based on the given info
 configs:
   model: "gemini-2.5-flash"
   prompt: "prompts/synthesizer.txt"
+  function_tools:
+    - mem0_search
+    - mem0_add

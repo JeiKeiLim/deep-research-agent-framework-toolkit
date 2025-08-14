@@ -5,3 +5,6 @@ configs:
   prompt: "prompts/planner.txt"
   prompt_args:
     max_steps: 10
+  function_tools:
+    - mem0_search
+    - mem0_add

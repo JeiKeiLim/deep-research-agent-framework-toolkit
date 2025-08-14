@@ -51,7 +51,7 @@ def agent_config_to_agent(
         prompt = config.configs.prompt
 
     if os.path.exists(prompt):
-        with open(prompt, "r") as file:
+        with open(prompt, "r", encoding="utf-8") as file:
             prompt = file.read()
 
     if "prompt_args" in config.configs:
