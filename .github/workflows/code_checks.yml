@@ -24,6 +24,7 @@ on:
       - uv.lock
       - pyproject.toml
       - '**.ipynb'
+      - '**.md'
 
 jobs:
   run-code-check:
