@@ -1,5 +1,5 @@
 name: "Search"
-description: "Searches for relevant information to answer the user's query."
+description: "This agent performs searches to find relevant information for the user's query and given search plan."
 configs:
   model: "gemini-2.5-flash-lite-preview-06-17"
   prompt: "prompts/search.txt"

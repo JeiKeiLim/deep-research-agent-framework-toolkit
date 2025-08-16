@@ -13,7 +13,7 @@ import os
 from typing import Callable, List, Literal
 
 import agents
-from agents.result import RunResult
+from agents.result import RunResult, RunResultStreaming
 from omegaconf import DictConfig
 from openai import AsyncOpenAI
 from pydantic import BaseModel
@@ -25,6 +25,7 @@ from src.draft_agents.output_types import (
     SearchPlan,
     output_types,
 )
+from src.utils.gradio.messages import oai_agent_stream_to_str_list
 from src.utils.langfuse.shared_client import langfuse_client
 
 
@@ -72,6 +73,7 @@ def agent_config_to_agent(
     if "sub_agents" in config:
         for sub_agent_name, sub_agent_config in config.sub_agents.items():
             sub_agent = agent_config_to_agent(sub_agent_config, openai_client)
+            print(sub_agent_name, sub_agent_config.description)
             tools.append(
                 sub_agent.as_tool(
                     tool_name=sub_agent_name,
@@ -239,20 +241,22 @@ class DeepResearchAgent:
 
                 self._notify_progress(
                     0.1 + ((i + 1) / total_steps) * 0.6,
-                    f"{revision_header_str} Searching for '{search_item.search_term}' ({i + 1}/{total_steps})",
+                    f"{revision_header_str} Searching for '{search_item.search_term}' ({i + 1}/{total_steps})"
+                    f"\n{search_response.final_output_as(str)}...",
                 )
                 local_search_results.append(search_response.final_output_as(str))
 
             self._notify_progress(
-                0.8,
-                f"{revision_header_str} Search completed: {len(local_search_results)} results found",
+                0.7,
+                f"{revision_header_str} Search completed: {len(local_search_results)} results found"
+                f"\n{local_search_results}",
             )
 
             search_span.update(output=local_search_results)
 
             return local_search_results
 
-    async def query(self, query: str) -> RunResult:
+    async def query(self, query: str) -> RunResult | RunResultStreaming:
         """Process a query using the configured agents.
 
         This method runs asynchronously and processes the provided query
@@ -269,7 +273,7 @@ class DeepResearchAgent:
             return await self._query_agent(query)
         return await self._query_sequential(query)
 
-    async def _query_agent(self, query: str) -> RunResult:
+    async def _query_agent(self, query: str) -> RunResultStreaming:
         """Process a query using the configured agents.
 
         This method runs asynchronously and processes the provided query using the
@@ -284,14 +288,26 @@ class DeepResearchAgent:
             Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
             returns the result.
         """
+        progress_percentage = 0.0
         with langfuse_client.start_as_current_span(
             name="DeepResearchAgentFrameworkToolkit.query_agent", input=query
         ) as agent_span:
-            response = await agents.Runner.run(
+            response_stream = agents.Runner.run_streamed(
                 self.agents["Main"], input=query, max_turns=999
             )
-            agent_span.update(output=response.final_output_as(str))
-            return response
+            async for _item in response_stream.stream_events():
+                intermediate_messages = oai_agent_stream_to_str_list(_item)
+
+                for intermediate_message in intermediate_messages:
+                    progress_percentage += 0.01
+                    # TODO: Find a way to calculate pseudo progress_percentage
+                    self._notify_progress(
+                        progress_percentage,
+                        f"{intermediate_message}",
+                    )
+
+            agent_span.update(output=response_stream.final_output_as(str))
+            return response_stream
 
     async def _query_sequential(self, query: str) -> RunResult:
         """Process a query using the configured agents.
@@ -349,7 +365,8 @@ class DeepResearchAgent:
                         search_plan = response.final_output_as(SearchPlan)
                         self._notify_progress(
                             0.1,
-                            f"{revision_header_str} Planning search steps completed: {len(search_plan.search_steps)} steps",
+                            f"{revision_header_str} Planning search steps completed: {len(search_plan.search_steps)} steps"
+                            f"\n{search_plan}",
                         )
                         planner_span.update(output=search_plan)
 
@@ -377,7 +394,7 @@ class DeepResearchAgent:
                     """
 
                     self._notify_progress(
-                        0.9, f"{revision_header_str} Synthesizing final answer"
+                        0.8, f"{revision_header_str} Synthesizing final answer"
                     )
 
                     with langfuse_client.start_as_current_span(
@@ -391,6 +408,11 @@ class DeepResearchAgent:
                         synthesized_answer = synthesizer_response.final_output_as(str)
 
                         synthesizer_span.update(output=synthesized_answer)
+
+                    self._notify_progress(
+                        0.9,
+                        f"{revision_header_str} Synthesized answer: {synthesized_answer}",
+                    )
 
                     revision_span.update(output=synthesized_answer)
                     critic_input = f"""Query**: {query}
@@ -412,6 +434,11 @@ class DeepResearchAgent:
                             CriticFeedback
                         )  # noqa
                         critic_span.update(output=critic_feedback)
+
+                    self._notify_progress(
+                        1.0,
+                        f"{revision_header_str} Critic feedback received: {critic_feedback}",
+                    )
 
                     if not critic_feedback.needs_revision:
                         agent_span.update(output=synthesized_answer)
