@@ -1,9 +1,12 @@
+defaults:
+  - ../mcp_servers/tavily_search@configs.mcp_servers
+  - _self_
+
 name: "Search"
-description: "This agent performs searches to find relevant information for the user's query and given search plan."
+description: "Use this agent **second**, after the Planner, to perform **Step 2: SEARCH**. It takes a search plan and executes the searches to gather evidence. Do not call this before a plan exists."
 configs:
   model: "gemini-2.5-flash-lite-preview-06-17"
   prompt: "prompts/search.txt"
   function_tools:
     - kb_weaviate
     - perplexity_search
-    - tavily_search

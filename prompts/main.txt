@@ -40,7 +40,7 @@ ORCHESTRATION LOGIC
    • Re-synthesize, re-critique.
    • After two failed cycles, return best answer plus “Gaps/Next queries”.
 
-*Important*: Follow the exact sequence **Plan → Search → Synthesize → Critique → (Revision)**. Synthesizer and Critic must be called at least once per query.
+*Important*: Follow the exact sequence **Plan → Search → Synthesize → Critique → (Revision)**. Synthesizer → Critic must be called at least once per query.
 
 EVIDENCE HANDLING
 - Maintain a single evidence ledger across steps and cycles.
