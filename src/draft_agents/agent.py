@@ -73,6 +73,7 @@ def agent_config_to_agent(
     if "sub_agents" in config:
         for sub_agent_name, sub_agent_config in config.sub_agents.items():
             sub_agent = agent_config_to_agent(sub_agent_config, openai_client)
+            print(sub_agent_name, sub_agent_config.description)
             tools.append(
                 sub_agent.as_tool(
                     tool_name=sub_agent_name,
@@ -240,13 +241,15 @@ class DeepResearchAgent:
 
                 self._notify_progress(
                     0.1 + ((i + 1) / total_steps) * 0.6,
-                    f"{revision_header_str} Searching for '{search_item.search_term}' ({i + 1}/{total_steps})",
+                    f"{revision_header_str} Searching for '{search_item.search_term}' ({i + 1}/{total_steps})"
+                    f"\n{search_response.final_output_as(str)}...",
                 )
                 local_search_results.append(search_response.final_output_as(str))
 
             self._notify_progress(
-                0.8,
-                f"{revision_header_str} Search completed: {len(local_search_results)} results found",
+                0.7,
+                f"{revision_header_str} Search completed: {len(local_search_results)} results found"
+                f"\n{local_search_results}",
             )
 
             search_span.update(output=local_search_results)
@@ -362,7 +365,8 @@ class DeepResearchAgent:
                         search_plan = response.final_output_as(SearchPlan)
                         self._notify_progress(
                             0.1,
-                            f"{revision_header_str} Planning search steps completed: {len(search_plan.search_steps)} steps",
+                            f"{revision_header_str} Planning search steps completed: {len(search_plan.search_steps)} steps"
+                            f"\n{search_plan}",
                         )
                         planner_span.update(output=search_plan)
 
@@ -390,7 +394,7 @@ class DeepResearchAgent:
                     """
 
                     self._notify_progress(
-                        0.9, f"{revision_header_str} Synthesizing final answer"
+                        0.8, f"{revision_header_str} Synthesizing final answer"
                     )
 
                     with langfuse_client.start_as_current_span(
@@ -404,6 +408,11 @@ class DeepResearchAgent:
                         synthesized_answer = synthesizer_response.final_output_as(str)
 
                         synthesizer_span.update(output=synthesized_answer)
+
+                    self._notify_progress(
+                        0.9,
+                        f"{revision_header_str} Synthesized answer: {synthesized_answer}",
+                    )
 
                     revision_span.update(output=synthesized_answer)
                     critic_input = f"""Query**: {query}
@@ -425,6 +434,11 @@ class DeepResearchAgent:
                             CriticFeedback
                         )  # noqa
                         critic_span.update(output=critic_feedback)
+
+                    self._notify_progress(
+                        1.0,
+                        f"{revision_header_str} Critic feedback received: {critic_feedback}",
+                    )
 
                     if not critic_feedback.needs_revision:
                         agent_span.update(output=synthesized_answer)

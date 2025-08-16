@@ -1,5 +1,5 @@
 name: "Synthesizer"
-description: "Synthesizer agent for generating responses based on the given information."
+description: "This agent synthesizes information from various sources to create a coherent response to the user's query."
 configs:
   model: "gemini-2.5-flash"
   prompt: "prompts/synthesizer.txt"

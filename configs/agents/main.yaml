@@ -7,7 +7,7 @@ defaults:
 
 name: "Main"
 configs:
-  model: "gemini-2.5-flash"
+  model: "gemini-2.5-pro"
   prompt: prompts/main.txt
   prompt_args:
     max_revision: 3
