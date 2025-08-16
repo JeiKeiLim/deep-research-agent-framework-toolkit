@@ -1,0 +1,12 @@
+arxiv-search:
+  kwargs:
+    cache_tools_list: true
+    client_session_timeout_seconds: 60
+    params:
+      command: "uv"
+      args:
+        - "tool"
+        - "run"
+        - "arxiv-mcp-server"
+        - "--storage-path"
+        - "/tmp/arxiv_search"

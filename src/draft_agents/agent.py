@@ -88,6 +88,8 @@ def agent_config_to_agent(
     # TODO: Add support for HostedMCPTool
     if tools:
         model_settings.tool_choice = "required"
+        # TODO: Find a way to limit the number of parallel tool calls
+        model_settings.parallel_tool_calls = False
 
     mcp_servers: List[MCPServerStdio] = []
     if "mcp_servers" in config.configs:
@@ -340,7 +342,9 @@ class DeepResearchAgent:
         ) as agent_span:
             try:
                 response_stream = agents.Runner.run_streamed(
-                    self.agents["Main"], input=query, max_turns=999
+                    self.agents["Main"],
+                    input=query,
+                    max_turns=999,
                 )
                 async for _item in response_stream.stream_events():
                     intermediate_messages = oai_agent_stream_to_str_list(_item)

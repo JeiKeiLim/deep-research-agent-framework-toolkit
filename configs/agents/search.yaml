@@ -1,4 +1,5 @@
 defaults:
+  - ../mcp_servers/arxiv_search@configs.mcp_servers
   - ../mcp_servers/tavily_search@configs.mcp_servers
   - _self_
 
