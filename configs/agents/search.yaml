@@ -6,3 +6,4 @@ configs:
   function_tools:
     - kb_weaviate
     - perplexity_search
+    - tavily_search
