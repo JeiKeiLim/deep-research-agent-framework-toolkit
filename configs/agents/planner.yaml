@@ -1,5 +1,5 @@
 name: "Planner"
-description: "This agent plans the steps needed to answer a user's query."
+description: "Use this agent **first** to perform **Step 1: PLAN**. It takes the user's raw query and creates a structured search plan. Do not use for any other purpose."
 configs:
   model: "gemini-2.5-flash"
   prompt: "prompts/planner.txt"

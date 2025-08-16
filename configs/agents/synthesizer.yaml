@@ -1,5 +1,5 @@
 name: "Synthesizer"
-description: "This agent synthesizes information from various sources to create a coherent response to the user's query."
+description: "Use this agent **third**, after Search, to perform **Step 3: SYNTHESIZE**. It takes the collected evidence and writes the final answer. This agent must always be called."
 configs:
   model: "gemini-2.5-flash"
   prompt: "prompts/synthesizer.txt"

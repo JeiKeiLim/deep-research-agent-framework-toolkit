@@ -1,0 +1,10 @@
+tavily-search:
+  kwargs:
+    cache_tools_list: true
+    client_session_timeout_seconds: 60
+    params:
+      command: "npx"
+      args:
+        - "-y"
+        - "mcp-remote"
+        - "https://mcp.tavily.com/mcp/?tavilyApiKey={TAVILY_API_KEY}"

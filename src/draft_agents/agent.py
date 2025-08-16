@@ -10,9 +10,10 @@ Contact: lim.jeikei@gmail.com
 
 import asyncio
 import os
-from typing import Callable, List, Literal
+from typing import Callable, List, Literal, Tuple
 
 import agents
+from agents.mcp import MCPServer, MCPServerStdio
 from agents.result import RunResult, RunResultStreaming
 from omegaconf import DictConfig
 from openai import AsyncOpenAI
@@ -32,7 +33,7 @@ from src.utils.langfuse.shared_client import langfuse_client
 def agent_config_to_agent(
     config: DictConfig,
     openai_client: AsyncOpenAI,
-) -> agents.Agent:
+) -> Tuple[agents.Agent, List[MCPServer]]:
     """Convert a DictConfig to an Agent instance.
 
     This function takes a configuration dictionary and converts it into
@@ -70,10 +71,13 @@ def agent_config_to_agent(
             for tool_name in config.configs.function_tools
         ]
 
+    sub_mcp_servers: List[MCPServer] = []
     if "sub_agents" in config:
         for sub_agent_name, sub_agent_config in config.sub_agents.items():
-            sub_agent = agent_config_to_agent(sub_agent_config, openai_client)
-            print(sub_agent_name, sub_agent_config.description)
+            sub_agent, sub_sub_mcp_servers = agent_config_to_agent(
+                sub_agent_config, openai_client
+            )
+            sub_mcp_servers.extend(sub_sub_mcp_servers)
             tools.append(
                 sub_agent.as_tool(
                     tool_name=sub_agent_name,
@@ -81,18 +85,41 @@ def agent_config_to_agent(
                 )
             )
 
+    # TODO: Add support for HostedMCPTool
     if tools:
         model_settings.tool_choice = "required"
+        # TODO: Find a way to limit the number of parallel tool calls
+        model_settings.parallel_tool_calls = False
 
-    return agents.Agent(
-        name=f"{config.name} Agent",
-        instructions=prompt,
-        model=agents.OpenAIChatCompletionsModel(
-            model=config.configs.model, openai_client=openai_client
+    mcp_servers: List[MCPServerStdio] = []
+    if "mcp_servers" in config.configs:
+        for mcp_server_name, mcp_server_config in config.configs.mcp_servers.items():
+            if (
+                "params" in mcp_server_config.kwargs
+                and "args" in mcp_server_config.kwargs.params
+            ):
+                for i in range(len(mcp_server_config.kwargs.params.args)):
+                    mcp_server_config.kwargs.params.args[i] = (
+                        mcp_server_config.kwargs.params.args[i].format(**os.environ)
+                    )
+
+            mcp_servers.append(
+                MCPServerStdio(name=mcp_server_name, **mcp_server_config.kwargs)
+            )
+
+    return (
+        agents.Agent(
+            name=f"{config.name} Agent",
+            instructions=prompt,
+            model=agents.OpenAIChatCompletionsModel(
+                model=config.configs.model, openai_client=openai_client
+            ),
+            tools=tools,
+            output_type=output_types.get(config.name, None),
+            model_settings=model_settings,
+            mcp_servers=mcp_servers,
         ),
-        tools=tools,
-        output_type=output_types.get(config.name, None),
-        model_settings=model_settings,
+        mcp_servers + sub_mcp_servers,
     )
 
 
@@ -128,10 +155,14 @@ class DeepResearchAgent:
         """
         self.orchestration_mode = orchestration_mode
         self._async_openai_client = AsyncOpenAI()
-        self.agents = {
-            key: agent_config_to_agent(value, self._async_openai_client)
-            for key, value in agents_config.items()
-        }
+        self._mcp_servers: List[MCPServer] = []
+        self.agents: dict[str, agents.Agent] = {}
+
+        for key, value in agents_config.items():
+            agent, mcp_servers = agent_config_to_agent(value, self._async_openai_client)
+            self.agents[key] = agent
+            self._mcp_servers.extend(mcp_servers)
+
         self.progress_callbacks = []
         self.max_revision = max_revision
 
@@ -269,9 +300,25 @@ class DeepResearchAgent:
             Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
             returns the result.
         """
+        print(len(self._mcp_servers), "MCP servers to connect")
+        for mcp_server in self._mcp_servers:
+            try:
+                await mcp_server.cleanup()
+            except Exception as e:
+                print(f"Error cleaning up MCP server {mcp_server.name}: {e}")
+
+        for mcp_server in self._mcp_servers:
+            try:
+                await mcp_server.connect()
+            except Exception as e:
+                print(f"Error connecting to MCP server {mcp_server.name}: {e}")
+
         if self.orchestration_mode == "agent":
-            return await self._query_agent(query)
-        return await self._query_sequential(query)
+            response = await self._query_agent(query)
+        else:
+            response = await self._query_sequential(query)
+
+        return response
 
     async def _query_agent(self, query: str) -> RunResultStreaming:
         """Process a query using the configured agents.
@@ -289,25 +336,36 @@ class DeepResearchAgent:
             returns the result.
         """
         progress_percentage = 0.0
+        response_stream: RunResultStreaming | None = None
         with langfuse_client.start_as_current_span(
             name="DeepResearchAgentFrameworkToolkit.query_agent", input=query
         ) as agent_span:
-            response_stream = agents.Runner.run_streamed(
-                self.agents["Main"], input=query, max_turns=999
-            )
-            async for _item in response_stream.stream_events():
-                intermediate_messages = oai_agent_stream_to_str_list(_item)
+            try:
+                response_stream = agents.Runner.run_streamed(
+                    self.agents["Main"],
+                    input=query,
+                    max_turns=999,
+                )
+                async for _item in response_stream.stream_events():
+                    intermediate_messages = oai_agent_stream_to_str_list(_item)
 
-                for intermediate_message in intermediate_messages:
-                    progress_percentage += 0.01
-                    # TODO: Find a way to calculate pseudo progress_percentage
-                    self._notify_progress(
-                        progress_percentage,
-                        f"{intermediate_message}",
-                    )
+                    for intermediate_message in intermediate_messages:
+                        progress_percentage += 0.01
+                        # TODO: Find a way to calculate pseudo progress_percentage
+                        self._notify_progress(
+                            progress_percentage,
+                            f"{intermediate_message}",
+                        )
 
-            agent_span.update(output=response_stream.final_output_as(str))
-            return response_stream
+                agent_span.update(output=response_stream.final_output_as(str))
+                return response_stream
+            except Exception as e:
+                error_message = f"The agent encountered an unrecoverable error: {str(e)}\nThis can happen if the agent tries to call a sub-agent that does not exist or with incorrect parameters. The operation will now stop."
+                self._notify_progress(1.0, error_message)
+                assert response_stream is not None, (
+                    "Response stream should not be None if an exception occurs."
+                )
+                return response_stream
 
     async def _query_sequential(self, query: str) -> RunResult:
         """Process a query using the configured agents.

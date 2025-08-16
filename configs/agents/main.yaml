@@ -6,6 +6,7 @@ defaults:
   - _self_
 
 name: "Main"
+description: "This agent orchestrates the workflow of the system, coordinating between the planner, synthesizer, search, and critic agents to answer user queries."
 configs:
   model: "gemini-2.5-pro"
   prompt: prompts/main.txt
