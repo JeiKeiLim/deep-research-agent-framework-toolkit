@@ -1,220 +1,212 @@
 # DRAFT (Deep Research Agent Framework Toolkit)
 
-A multi-agent research framework that uses AI agents to perform comprehensive research tasks through planning, searching, synthesizing, and critiquing.
+A multi-agent research framework that uses AI agents to plan, search, synthesize, and critique to produce high-quality research answers with live progress and observability.
 
 ## Overview
 
-DRAFT is an educational project that demonstrates how to build a sophisticated AI agent system for deep research tasks. The framework uses multiple specialized agents that work together to:
+DRAFT demonstrates how to build a sophisticated, composable AI agent system for deep research tasks. Specialized agents collaborate to:
 
-1. **Plan** research strategies
-2. **Search** multiple knowledge sources
-3. **Synthesize** information into comprehensive answers
-4. **Criticize** and improve the results through iterative refinement
+1. Plan research strategies
+2. Search multiple knowledge sources and tools
+3. Synthesize evidence into comprehensive answers
+4. Critique and iteratively improve results
 
 ## Architecture
 
 ### Multi-Agent System
 
-The framework consists of four main agents:
-
-- **Planner Agent**: Breaks down research queries into executable search steps
-- **Search Agent**: Performs searches using multiple tools (Weaviate knowledge base, Perplexity API)
-- **Synthesizer Agent**: Combines evidence into comprehensive, well-structured answers
-- **Critic Agent**: Evaluates answers and provides feedback for improvement
+- **Planner**: Produces a structured search plan
+- **Search**: Executes searches via function tools and MCP servers
+- **Synthesizer**: Writes the final answer from evidence
+- **Critic**: Evaluates answer quality and suggests revisions
 
 ### Key Components
 
-- **Agent Framework**: Built on OpenAI's agents framework with custom output types
-- **Knowledge Base**: Weaviate vector database with Wikipedia dump (cutoff: May 2025)
-- **Web Search**: Perplexity API integration for current information
-- **Observability**: Langfuse integration for tracing and monitoring
-- **GUI**: Gradio-based web interface for interactive research
+- **Agent framework**: OpenAI Agents SDK with custom output types
+- **Knowledge base**: Weaviate vector DB (default collection: `enwiki_20250520`)
+- **Web search**: Perplexity API and Tavily
+- **MCP integration**: External servers (e.g., Tavily via `mcp-remote`, ArXiv MCP server)
+- **Observability**: Langfuse tracing (OpenTelemetry + Logfire instrumentation)
+- **GUI**: Gradio-based web interface
 
 ## Features
 
-- **Iterative Refinement**: Agents can revise answers based on critic feedback (up to 3 revisions)
-- **Multi-Source Search**: Combines knowledge base and web search capabilities
-- **Progress Tracking**: Real-time progress updates during research
-- **Structured Output**: Type-safe agent outputs using Pydantic models
-- **Async Processing**: Full async support for concurrent operations
-- **Comprehensive Logging**: Detailed tracing with Langfuse
+- **Agent orchestration modes**:
+  - `agent` (default): single orchestrator agent with streaming updates
+  - `sequential`: explicit plan → search → synthesize → critique with up to `max_revision` iterations
+- **Multi-source retrieval**: Weaviate + Perplexity + Tavily
+- **MCP support**: Connect to external capability servers via stdio (see MCP section)
+- **Structured outputs**: Pydantic models; safe type conversions
+- **Async-ready**: Concurrent tool calls with rate limiting
+- **Tracing**: Langfuse traces linked to evaluations
 
 ## Installation
 
 ### Prerequisites
 
 - Python 3.12+
-- UV package manager
-- Environment variables configured (see Configuration section)
+- [`uv`](https://github.com/astral-sh/uv) package manager
+- Node.js + `npx` (required to run `mcp-remote` for some MCP servers)
 
 ### Setup
 
-1. Clone the repository:
+1) Clone and install:
 ```bash
 git clone https://github.com/JeiKeiLim/deep-research-agent-framework-toolkit.git
 cd deep-research-agent-framework-toolkit
-```
-
-2. Install dependencies:
-```bash
 uv sync
 ```
 
-3. Set up environment variables (see Configuration section)
+2) Configure environment variables by copying `.env.example`:
+```bash
+cp .env.example .env
+# Fill in values in .env
+```
 
 ## Configuration
 
-The project requires several environment variables to be configured:
+Set the following environment variables (see `.env.example`):
 
-### Required Environment Variables
-- Make sure to copy `.env.example` to `.env` and modify accordingly.
+- **OPENAI-compatible LLM**:
+  - `OPENAI_BASE_URL` (e.g., OpenAI-compatible endpoint)
+  - `OPENAI_API_KEY`
+- **Embeddings** (Cloudflare Workers AI or compatible):
+  - `EMBEDDING_BASE_URL`
+  - `EMBEDDING_API_KEY`
+- **Langfuse**:
+  - `LANGFUSE_PUBLIC_KEY` (must start with `pk-lf-`)
+  - `LANGFUSE_SECRET_KEY` (must start with `sk-lf-`)
+  - `LANGFUSE_HOST` (default `https://us.cloud.langfuse.com`)
+- **Weaviate**:
+  - `WEAVIATE_HTTP_HOST`, `WEAVIATE_GRPC_HOST`, `WEAVIATE_API_KEY`
+  - `WEAVIATE_HTTP_PORT`, `WEAVIATE_GRPC_PORT` (443 for cloud; 8080/50051 locally)
+  - `WEAVIATE_HTTP_SECURE`, `WEAVIATE_GRPC_SECURE` (true/false)
+- **Perplexity**: `PERPLEXITY_API_KEY`
+- **Tavily**: `TAVILY_API_KEY`
 
-```bash
-# Embeddings API
-EMBEDDING_API_KEY=your_embedding_api_key
-EMBEDDING_BASE_URL=your_embedding_base_url
+Hydra config lives in `configs/config.yaml` and composes agent configs from `configs/agents/*.yaml`. Two notable toggles:
 
-# Weaviate
-WEAVIATE_HTTP_HOST=your_weaviate_host
-WEAVIATE_GRPC_HOST=your_weaviate_host
-WEAVIATE_API_KEY=your_weaviate_api_key
-WEAVIATE_HTTP_PORT=443
-WEAVIATE_GRPC_PORT=443
-WEAVIATE_HTTP_SECURE=true
-WEAVIATE_GRPC_SECURE=true
+- `agent_configs.max_revision`: number of sequential-mode revisions (default: 3)
+- `agent_configs.orchestration_mode`: `agent` or `sequential`
 
-# Langfuse
-LANGFUSE_PUBLIC_KEY=pk-lf-your_public_key
-LANGFUSE_SECRET_KEY=sk-lf-your_secret_key
-LANGFUSE_HOST=https://us.cloud.langfuse.com
-
-# Perplexity
-PERPLEXITY_API_KEY=your_perplexity_api_key
-```
+You can also override Hydra values via CLI flags if desired.
 
 ## Usage
 
-### Running the GUI
-
-Start the Gradio web interface:
+### Run the GUI
 
 ```bash
 PYTHONPATH=. uv run --env-file .env apps/gui.py
 ```
+Visit `http://localhost:7860`.
 
-The GUI will be available at `http://localhost:7860`
+### Switch orchestration mode
 
-## Project Structure
+Edit `configs/config.yaml` or pass a Hydra override, e.g.:
+
+```bash
+PYTHONPATH=. uv run --env-file .env apps/gui.py agent_configs.orchestration_mode=sequential
+```
+
+## MCP servers
+
+The Search agent can connect to MCP servers defined in `configs/mcp_servers/*.yaml`.
+
+- Included configs:
+  - `tavily_search.yaml` → launches Tavily via `npx mcp-remote https://mcp.tavily.com/mcp/?tavilyApiKey={TAVILY_API_KEY}`
+  - `arxiv_search.yaml` → launches `arxiv-mcp-server` via `uv tool run`
+
+Requirements:
+
+- Node.js + `npx` for `mcp-remote`
+- Install the ArXiv MCP server (optional pre-install to avoid on-demand install):
+```bash
+uv tool install arxiv-mcp-server
+```
+
+## Project structure
 
 ```
 deep-research-agent-framework-toolkit/
 ├── apps/
-│   └── gui.py                 # Gradio web interface
+│   └── gui.py                      # Gradio web interface
 ├── configs/
-│   ├── agents/                # Agent configurations
-│   │   ├── critic.yaml
-│   │   ├── main.yaml
-│   │   ├── planner.yaml
-│   │   ├── search.yaml
-│   │   └── synthesizer.yaml
-│   └── config.yaml           # Main configuration
-├── outputs/                   # Generated outputs
-├── prompts/                   # Agent prompt templates
-│   ├── critic.txt
-│   ├── planner.txt
-│   ├── search.txt
-│   └── synthesizer.txt
+│   ├── agents/                     # Agent configs (Main, Planner, Search, Synthesizer, Critic, Evaluator)
+│   ├── mcp_servers/                # MCP server definitions (Tavily, ArXiv)
+│   └── config.yaml                 # Root Hydra config
+├── evals/
+│   ├── datasets/test_dataset.jsonl # Example dataset
+│   ├── run_evaluation.py           # LLM-as-a-judge evaluation pipeline
+│   └── upload_data.py              # Upload dataset to Langfuse
+├── prompts/                        # Prompts (main, planner, search, synthesizer, critic, evaluator)
 ├── src/
-│   ├── draft_agents/         # Core agent implementation
-│   │   ├── agent.py         # Main agent class
-│   │   ├── function_tools/   # Search and knowledge tools
-│   │   └── output_types/    # Pydantic models for outputs
-│   └── utils/               # Utility modules
-│       ├── async_utils.py
-│       ├── env_vars.py
-│       ├── gradio/
-│       ├── langfuse/
-│       └── logging.py
-└── tests/                   # Test suite
-    └── tool_tests/
+│   ├── draft_agents/
+│   │   ├── agent.py                # Agent orchestration + MCP wiring
+│   │   └── function_tools/         # Tooling: Weaviate, Perplexity, Tavily
+│   └── utils/                      # Env, tracing, gradio helpers, etc.
+├── tests/                          # Unit/integration tests
+└── pyproject.toml                  # Dependencies and tooling config
+```
+
+## Evaluation
+
+Upload dataset to Langfuse:
+
+```bash
+PYTHONPATH=. uv run --env-file .env evals/upload_data.py \
+  --source_dataset ./evals/datasets/test_dataset.jsonl \
+  --langfuse_dataset_name test_questions
+```
+
+Run evaluation with LLM-as-a-judge and record scores back to Langfuse:
+
+```bash
+PYTHONPATH=. uv run --env-file .env evals/run_evaluation.py
 ```
 
 ## Development
 
-### Code Quality
+- **Format**: `uv run ruff format .`
+- **Lint**: `uv run ruff check .`
+- **Test**: `PYTHONPATH=. uv run --env-file .env pytest`
+- **Pre-commit**: `uv run pre-commit run --all-files`
 
-- **Formatting**: `uv run ruff format .`
-- **Linting**: `uv run ruff check .`
-- **Testing**: `uv run pytest`
-- **Pre-commit hooks**: `uv run pre-commit run --all-files`
+### Adding new agents
 
-### Testing
+1. Create config in `configs/agents/`
+2. Add prompt in `prompts/`
+3. Add output types in `src/draft_agents/output_types/` (skip if `str`)
+4. Reference from `configs/agents/main.yaml` if part of Main
 
-Run the test suite:
+### Adding new tools
 
-```bash
-PYTHONPATH=. uv run --env-file .env pytest
-```
-
-Run integration tests:
-
-```bash
-PYTHONPATH=. uv run --env-file .env pytest tests/tool_tests/test_integration.py -v
-```
-
-### Adding New Agents
-
-1. Create agent configuration in `configs/agents/`
-2. Add prompt template in `prompts/`
-3. Define output types in `src/draft_agents/output_types/`
-    - If desired output type is `str`, skip this.
-4. Update the main agent configuration
-
-### Adding New Tools
-
-1. Implement tool in `src/draft_agents/function_tools/`
+1. Implement in `src/draft_agents/function_tools/`
 2. Register in `src/draft_agents/function_tools/__init__.py`
-3. Update agent configurations to use the new tool
+3. Add to agent config (e.g., `Search`)
 
-## Evaluation
-### Upload dataset
-```bash
-PYTHONPATH=. uv run --env-file .env evals/upload_data.py --source_dataset ./evals/datasets/test_dataset.jsonl --langfuse_dataset_name test_questions
-```
+## Technologies used
 
-### Creating ground truth
-- How did I create the ground truth?
-  - I used the `evals/datasets/test_dataset.jsonl` file to create the ground truth.
-  - The ground truth is created by asking ChatGPT o3 to generate answers for the questions in the dataset.
-    - Sometimes o3 shortens the answers, in which I used following prompt to expand the answers:
-      - `With your background research data, make the answer long and detailed.`
-    - It seems that o3 has all the background information but it choose to shorten the answers for readability.
+- **Agent framework**: OpenAI Agents SDK
+- **Models**: Gemini 2.5 (via OpenAI-compatible endpoint)
+- **Vector DB**: Weaviate
+- **Search**: Perplexity API, Tavily
+- **Embeddings**: Cloudflare AI (e.g., `@cf/baai/bge-m3`)
+- **Observability**: Langfuse (OTLP via OpenTelemetry)
+- **UI**: Gradio
+- **Config**: Hydra + OmegaConf
+- **Typing/validation**: Pydantic
 
-## Technologies Used
+## Troubleshooting
 
-- **AI Framework**: OpenAI Agents Framework
-- **LLM**: Gemini 2.5 Flash models
-- **Vector Database**: Weaviate
-- **Web Search**: Perplexity API
-- **Embeddings**: Cloudflare AI embeddings
-- **Observability**: Langfuse
-- **Web Interface**: Gradio
-- **Configuration**: Hydra + OmegaConf
-- **Async Support**: asyncio, httpx
-- **Type Safety**: Pydantic
-- **Testing**: pytest, pytest-asyncio
+- Langfuse keys must start with `pk-lf-`/`sk-lf-` or startup will fail.
+- Weaviate connection requires matching host/port/secure flags; local dev often uses `8080`/`50051` and `false` for secure flags.
+- Ensure `OPENAI_BASE_URL`/`OPENAI_API_KEY` are set; the Agents SDK relies on them.
+- MCP servers require Node.js (`npx`) and network access to fetch `mcp-remote`.
 
 ## Contributing
 
-This is an educational project for learning about AI agents. Contributions are welcome!
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
+Contributions are welcome. Please open an issue or pull request.
 
 ## Disclaimer
 
-This is an educational project designed to learn about AI agents and multi-agent systems. The name "DRAFT" stands for "Deep Research Agent Framework Toolkit" and is intentionally verbose for educational clarity.
+This is an educational project for learning about AI agents and multi-agent systems. The name "DRAFT" stands for "Deep Research Agent Framework Toolkit".
