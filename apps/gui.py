@@ -8,7 +8,6 @@ Contact: lim.jeikei@gmail.com
 """
 
 import asyncio
-from datetime import datetime
 from typing import AsyncGenerator
 
 import gradio as gr
@@ -57,7 +56,7 @@ class DeepResearchAgentGUI:
         self.agent.add_progress_callback(
             lambda progress: self.progress_queue.put_nowait(progress)
         )
-        
+
         # 제목 업데이트 콜백 등록
         self.agent.add_title_update_callback(self._on_title_updated)
 
@@ -72,7 +71,8 @@ class DeepResearchAgentGUI:
         self._delete_btn: gr.Button
         self._current_info: gr.Markdown
 
-        # Internal mapping: label <-> id (for reference, actual Dropdown uses (label,id) tuple)
+        # Internal mapping: label <-> id (for reference).
+        # Dropdown choices use (label, id) tuples; the value is the id.
         self._label_to_id: dict[str, str] = {}
         self._id_to_label: dict[str, str] = {}
 
@@ -90,15 +90,19 @@ class DeepResearchAgentGUI:
 
     def _create_chat_messages(self, conversation) -> list[ChatMessage]:
         return [
-            ChatMessage(role=("user" if m.role == "user" else "assistant"), content=m.content)
+            ChatMessage(
+                role=("user" if m.role == "user" else "assistant"), content=m.content
+            )
             for m in conversation.messages
         ]
 
     def _create_info_text(self, conversation, title_override: str = None) -> str:
         title = title_override or conversation.title or self._get_default_title()
-        return (f"**Current Chat:** {title}\n"
-                f"**Created at:** {conversation.created_at.strftime('%Y-%m-%d %H:%M')}\n"
-                f"**Message count:** {len(conversation.messages)}")
+        return (
+            f"**Current Chat:** {title}\n"
+            f"**Created at:** {conversation.created_at.strftime('%Y-%m-%d %H:%M')}\n"
+            f"**Message count:** {len(conversation.messages)}"
+        )
 
     def _rebuild_maps(self) -> list[tuple[str, str]]:
         """Rebuild label/id maps and return Dropdown choices as (label, value=id)."""
@@ -136,7 +140,9 @@ class DeepResearchAgentGUI:
             if hasattr(self, "_conv_dropdown"):
                 self._conv_dropdown.choices = choices
                 cur_id = self.agent.current_conversation_id
-                self._conv_dropdown.value = cur_id if cur_id else (choices[0][1] if choices else None)
+                self._conv_dropdown.value = (
+                    cur_id if cur_id else (choices[0][1] if choices else None)
+                )
 
             if self.agent.current_conversation_id:
                 cur = self.agent.get_conversation(self.agent.current_conversation_id)
@@ -148,7 +154,10 @@ class DeepResearchAgentGUI:
     # ---------- App ----------
 
     def start(self) -> None:
-        self.app.launch(server_name="0.0.0.0", server_port=7860, share=False, debug=True)
+        """Launch the Gradio app."""
+        self.app.launch(
+            server_name="0.0.0.0", server_port=7860, share=False, debug=True
+        )
 
     async def _process_query(
         self, query: str, gr_messages: list[ChatMessage]
@@ -158,7 +167,9 @@ class DeepResearchAgentGUI:
         gr_messages.append(ChatMessage(role="user", content=query))
         yield {
             self._chatbot: gr_messages,
-            self._chat_message: gr.update(value="", placeholder="Thinking...", interactive=False),
+            self._chat_message: gr.update(
+                value="", placeholder="Thinking...", interactive=False
+            ),
         }
 
         # Drain stale progress
@@ -178,7 +189,9 @@ class DeepResearchAgentGUI:
             ChatMessage(
                 role="assistant",
                 content=self._compose_progress_message(
-                    intermediate_steps=steps, latest_step=None, progress_label="Starting..."
+                    intermediate_steps=steps,
+                    latest_step=None,
+                    progress_label="Starting...",
                 ),
             )
         )
@@ -187,7 +200,9 @@ class DeepResearchAgentGUI:
         # Stream progress
         while not task.done():
             try:
-                prog: DeepResearchProgress = await asyncio.wait_for(self.progress_queue.get(), timeout=0.1)
+                prog: DeepResearchProgress = await asyncio.wait_for(
+                    self.progress_queue.get(), timeout=0.1
+                )
                 if not steps or steps[-1] != prog.progress_text:
                     steps.append(prog.progress_text)
                 label = f"{prog.progress_percentage:.1%}"
@@ -195,7 +210,9 @@ class DeepResearchAgentGUI:
                 gr_messages[idx] = ChatMessage(
                     role="assistant",
                     content=self._compose_progress_message(
-                        intermediate_steps=steps, latest_step=latest, progress_label=label
+                        intermediate_steps=steps,
+                        latest_step=latest,
+                        progress_label=label,
                     ),
                 )
                 yield {self._chatbot: gr_messages}
@@ -207,13 +224,20 @@ class DeepResearchAgentGUI:
         gr_messages[idx] = ChatMessage(
             role="assistant",
             content=self._compose_progress_message(
-                intermediate_steps=steps, label_text="🎉🎊🥳 Research complete.", latest_step=None, progress_label="100%"
+                intermediate_steps=steps,
+                label_text="🎉🎊🥳 Research complete.",
+                latest_step=None,
+                progress_label="100%",
             ),
         )
-        gr_messages.append(ChatMessage(role="assistant", content="---\n" + result.final_output_as(str)))
+        gr_messages.append(
+            ChatMessage(role="assistant", content="---\n" + result.final_output_as(str))
+        )
         yield {
             self._chatbot: gr_messages,
-            self._chat_message: gr.update(placeholder="Ask a question", interactive=True),
+            self._chat_message: gr.update(
+                placeholder="Ask a question", interactive=True
+            ),
         }
 
     # ---------- UI composition helpers ----------
@@ -226,7 +250,9 @@ class DeepResearchAgentGUI:
         latest_step: str | None,
         progress_label: str | None,
     ) -> str:
-        title = "Intermediate steps" + (f" — {progress_label}" if progress_label else "")
+        title = "Intermediate steps" + (
+            f" — {progress_label}" if progress_label else ""
+        )
         steps_md = self._format_intermediate_steps(intermediate_steps)
         details = (
             f"<details>\n"
@@ -243,7 +269,10 @@ class DeepResearchAgentGUI:
     def _format_intermediate_steps(self, steps: list[str]) -> str:
         if not steps:
             return "No intermediate steps yet."
-        return "\n".join(f"{i}. {s.replace('```', '\u0060\u0060\u0060')}" for i, s in enumerate(steps, 1))
+        return "\n".join(
+            f"{i}. {s.replace('```', '\u0060\u0060\u0060')}"
+            for i, s in enumerate(steps, 1)
+        )
 
     # ---------- GUI ----------
 
@@ -265,7 +294,9 @@ class DeepResearchAgentGUI:
                 """
             )
             gr.Markdown("# Deep Research Agent")
-            gr.Markdown("A multi-agent research framework that uses AI agents to plan, search, synthesize, and critique to produce high-quality research answers with live progress and observability.")
+            gr.Markdown(
+                "A multi-agent research framework that uses AI agents to plan, search, synthesize, and critique to produce high-quality research answers with live progress and observability."
+            )
 
             with gr.Row():
                 # ---------- Sidebar only ----------
@@ -275,20 +306,22 @@ class DeepResearchAgentGUI:
                     gr.Markdown("### 📚 Chat List")
                     self._conv_dropdown = gr.Dropdown(
                         label="Select a chat",
-                        choices=[],   # [(label, id)]
-                        value=None,   # id
+                        choices=[],  # [(label, id)]
+                        value=None,  # id
                         interactive=True,
                     )
 
                     self._delete_btn = gr.Button("Delete Selected Chat", variant="stop")
 
                     gr.Markdown("### 🔍 Search Chat")
-                    self._search_query = gr.Textbox(placeholder="Search chat", lines=1, show_label=False)
+                    self._search_query = gr.Textbox(
+                        placeholder="Search chat", lines=1, show_label=False
+                    )
                     self._search_btn = gr.Button("Search", variant="secondary")
                     self._search_dropdown = gr.Dropdown(
                         label="Select from search results",
-                        choices=[],    # [(label, id)]
-                        value=None,    # id
+                        choices=[],  # [(label, id)]
+                        value=None,  # id
                         interactive=True,
                         visible=False,
                     )
@@ -297,7 +330,9 @@ class DeepResearchAgentGUI:
 
                 # ---------- Main chat ----------
                 with gr.Column(scale=3):
-                    self._chatbot = gr.Chatbot(type="messages", label="Agent", height=700)
+                    self._chatbot = gr.Chatbot(
+                        type="messages", label="Agent", height=700
+                    )
                     self._chat_message = gr.Textbox(
                         elem_id="chat-message",
                         placeholder="Enter your question",
@@ -317,13 +352,18 @@ class DeepResearchAgentGUI:
             # New chat
             self._new_btn.click(
                 self._create_new_conversation,
-                outputs=[self._chatbot, self._chat_message, self._current_info, self._conv_dropdown],
+                outputs=[
+                    self._chatbot,
+                    self._chat_message,
+                    self._current_info,
+                    self._conv_dropdown,
+                ],
             )
 
             # Select chat (Dropdown -> value=id)
             self._conv_dropdown.change(
-                self._switch_conversation,          # def _switch_conversation(self, conv_id: str)
-                inputs=[self._conv_dropdown],       # value=id
+                self._switch_conversation,  # def _switch_conversation(self, conv_id: str)
+                inputs=[self._conv_dropdown],  # value=id
                 outputs=[self._chatbot, self._chat_message, self._current_info],
             )
 
@@ -336,29 +376,40 @@ class DeepResearchAgentGUI:
 
             # Select search result → switch + sync main dropdown
             self._search_dropdown.change(
-                self._switch_conversation_and_sync,     # def _switch_conversation_and_sync(self, conv_id: str)
+                self._switch_conversation_and_sync,  # def _switch_conversation_and_sync(self, conv_id: str)
                 inputs=[self._search_dropdown],
-                outputs=[self._chatbot, self._chat_message, self._current_info, self._conv_dropdown],
+                outputs=[
+                    self._chatbot,
+                    self._chat_message,
+                    self._current_info,
+                    self._conv_dropdown,
+                ],
             )
 
             # Delete
             self._delete_btn.click(
                 self._delete_current_conversation,
-                outputs=[self._chatbot, self._chat_message, self._current_info, self._conv_dropdown],
+                outputs=[
+                    self._chatbot,
+                    self._chat_message,
+                    self._current_info,
+                    self._conv_dropdown,
+                ],
             )
 
             return app
 
     # ---------- Sidebar actions ----------
     def _search_conversation_history(self, query: str):
-        """Search conversation history and show results in the search dropdown.
+        """Search conversation history and update the search dropdown.
 
-        Returns:
-            tuple[gr.update, gr.update]:
-                - 1st: update for self._search_dropdown (choices as (label, id), value=None, visible flag)
-                - 2nd: update for self._search_query (clear the textbox)
+        Returns
+        -------
+        tuple[gr.update, gr.update]
+            First: update for search dropdown (choices as (label, id),
+            clears value, sets visible).
+            Second: update for search textbox (clears its value).
         """
-        # If no search query or search feature not supported, hide
         if not hasattr(self.agent, "search_history") or not query.strip():
             return gr.update(visible=False), gr.update()
 
@@ -388,14 +439,14 @@ class DeepResearchAgentGUI:
         print("Created:", new_id)
 
         info = self._create_info_text(
-            self.agent.get_conversation(new_id), 
-            title_override=self._get_default_title()
+            self.agent.get_conversation(new_id),
+            title_override=self._get_default_title(),
         )
 
         return (
-            gr.update(value=[]),             # chatbot clear
-            gr.update(value=""),             # textbox clear
-            gr.update(value=info),           # info
+            gr.update(value=[]),  # chatbot clear
+            gr.update(value=""),  # textbox clear
+            gr.update(value=info),  # info
             self._update_conv_dropdown(select_id=new_id),  # dropdown updated & selected
         )
 
@@ -429,7 +480,9 @@ class DeepResearchAgentGUI:
             new_current = remaining[0]
         else:
             self.agent.start_new_conversation()
-            new_current = self.agent.get_conversation(self.agent.current_conversation_id)
+            new_current = self.agent.get_conversation(
+                self.agent.current_conversation_id
+            )
 
         if new_current:
             chats = self._create_chat_messages(new_current)
@@ -438,8 +491,7 @@ class DeepResearchAgentGUI:
         else:
             chats = []
             info = self._create_info_text(
-                None, 
-                title_override=self._get_default_title()
+                None, title_override=self._get_default_title()
             )
             new_id = getattr(new_current, "id", None)
 
@@ -477,20 +529,20 @@ class DeepResearchAgentGUI:
             self._current_info.value = info
 
     def _on_title_updated(self, conversation_id: str, new_title: str) -> None:
-        """Callback for when the title of a conversation is updated."""
+        """Handle title update event for a conversation."""
         print(f"Title updated for conversation {conversation_id}: {new_title}")
-        
+
         # 대화 목록 새로고침
         self._rebuild_maps()
-        
+
         # 현재 대화 정보 업데이트
         if self.agent.current_conversation_id == conversation_id:
             current_conv = self.agent.get_conversation(conversation_id)
             if current_conv:
                 self._update_current_conversation_info(current_conv)
-        
+
         # 드롭다운 업데이트
-        if hasattr(self, '_conv_dropdown'):
+        if hasattr(self, "_conv_dropdown"):
             self._conv_dropdown.choices = self._rebuild_maps()
             if self.agent.current_conversation_id:
                 self._conv_dropdown.value = self.agent.current_conversation_id
@@ -498,6 +550,7 @@ class DeepResearchAgentGUI:
 
 @hydra.main(version_base=None, config_path="../configs", config_name="config")
 def main(cfg: DictConfig) -> None:
+    """Entry point for the GUI application."""
     setup_langfuse_tracer()
     gui_app = DeepResearchAgentGUI(cfg)
     gui_app.start()

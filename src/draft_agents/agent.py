@@ -11,7 +11,7 @@ Contact: lim.jeikei@gmail.com
 import asyncio
 import os
 from datetime import datetime
-from typing import Callable, List, Literal, Tuple, Optional, Dict, Any
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
 
 import agents
 from agents.mcp import MCPServer, MCPServerStdio
@@ -27,9 +27,9 @@ from src.draft_agents.output_types import (
     SearchPlan,
     output_types,
 )
+from src.utils.conversation_history import Conversation, ConversationHistory
 from src.utils.gradio.messages import oai_agent_stream_to_str_list
 from src.utils.langfuse.shared_client import langfuse_client
-from src.utils.conversation_history import ConversationHistory, Conversation
 
 
 def agent_config_to_agent(
@@ -174,7 +174,7 @@ class DeepResearchAgent:
 
         self.progress_callbacks = []
         self.max_revision = max_revision
-        
+
         # History management
         self.enable_history = enable_history
         self.max_messages = max_messages
@@ -195,14 +195,13 @@ class DeepResearchAgent:
         called with the current progress of the agent.
 
         Args:
-            callback: A callable that takes a DeepResearchProgress object as an
-            argument.
+            callback:
+                A callable previously registered as a title-update
+                callback.
         """
         self.progress_callbacks.append(callback)
 
-    def add_title_update_callback(
-        self, callback: Callable[[str, str], None]
-    ) -> None:
+    def add_title_update_callback(self, callback: Callable[[str, str], None]) -> None:
         """Add a title update callback to the agent.
 
         This method allows external code to register a callback function that will be
@@ -236,7 +235,8 @@ class DeepResearchAgent:
         title update callback function.
 
         Args:
-            callback: A callable that was previously registered as a title update callback.
+            callback: A callable that was previously registered as a
+                     title update callback.
         """
         if callback in self.title_update_callbacks:
             self.title_update_callbacks.remove(callback)
@@ -244,112 +244,133 @@ class DeepResearchAgent:
     # History management methods
     def start_new_conversation(self, title: str = None) -> str:
         """Start a new conversation session.
-        
+
         Args:
             title: Optional title for the conversation. If None, will use timestamp.
-            
-        Returns:
+
+        Returns
+        -------
             Conversation ID
         """
         if not self.enable_history or not self.history:
             return None
-            
+
         if title is None:
             title = f"Conversation {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
-            
+
         self.current_conversation_id = self.history.create_conversation(title)
         return self.current_conversation_id
-    
+
     def get_conversation_context(self, max_messages: int = None) -> str:
         """Get current conversation context for agent reference.
-        
+
         Args:
             max_messages: Maximum number of recent messages to include.
                          If None, uses the configured default value.
-            
-        Returns:
+
+        Returns
+        -------
             Context string for the agent
         """
-        if not self.enable_history or not self.history or not self.current_conversation_id:
+        if (
+            not self.enable_history
+            or not self.history
+            or not self.current_conversation_id
+        ):
             return "No conversation context available."
-        
+
         # Use configured default if max_messages is not specified
         if max_messages is None:
             max_messages = self.max_messages
-            
-        return self.history.get_conversation_context(self.current_conversation_id, max_messages)
-    
-    def add_message_to_history(self, role: str, content: str, metadata: Optional[Dict[str, Any]] = None) -> bool:
+
+        return self.history.get_conversation_context(
+            self.current_conversation_id, max_messages
+        )
+
+    def add_message_to_history(
+        self, role: str, content: str, metadata: Optional[Dict[str, Any]] = None
+    ) -> bool:
         """Add a message to the current conversation history.
-        
+
         Args:
             role: Role of the message sender ("user" or "assistant")
             content: Message content
             metadata: Optional metadata
-            
-        Returns:
+
+        Returns
+        -------
             True if successful, False if history is disabled or no current conversation
         """
-        if not self.enable_history or not self.history or not self.current_conversation_id:
+        if (
+            not self.enable_history
+            or not self.history
+            or not self.current_conversation_id
+        ):
             return False
-            
-        return self.history.add_message(self.current_conversation_id, role, content, metadata)
-    
+
+        return self.history.add_message(
+            self.current_conversation_id, role, content, metadata
+        )
+
     def search_history(self, query: str, max_results: int = 10) -> List[Conversation]:
         """Search conversation history.
-        
+
         Args:
             query: Search query
             max_results: Maximum number of results to return
-            
-        Returns:
+
+        Returns
+        -------
             List of matching conversations
         """
         if not self.enable_history or not self.history:
             return []
-            
+
         return self.history.search_conversations(query, max_results)
-    
+
     def get_all_conversations(self) -> List[Conversation]:
         """Get all conversations.
-        
-        Returns:
+
+        Returns
+        -------
             List of all conversations
         """
         if not self.enable_history or not self.history:
             return []
-            
+
         return self.history.get_all_conversations()
-    
+
     def switch_conversation(self, conversation_id: str) -> bool:
         """Switch to a different conversation.
-        
+
         Args:
             conversation_id: ID of the conversation to switch to
-            
-        Returns:
+
+        Returns
+        -------
             True if successful, False if conversation not found
         """
         if not self.enable_history or not self.history:
             return False
-            
+
         if conversation_id in self.history.conversations:
             self.current_conversation_id = conversation_id
             return True
         return False
-    
+
     def get_conversation(self, conversation_id: str):
         """Get a conversation by ID.
-        
+
         Args:
             conversation_id: ID of the conversation
-            
-        Returns:
+
+        Returns
+        -------
             Conversation object or None if not found
         """
         if not self.enable_history or not self.history:
             return None
-            
+
         return self.history.get_conversation(conversation_id)
 
     def _notify_progress(self, p_percentage: float, p_text: str) -> None:
@@ -445,7 +466,7 @@ class DeepResearchAgent:
 
             return local_search_results
 
-    async def query(self, query: str) -> RunResult | RunResultStreaming:
+    async def query(self, query: str) -> RunResult | RunResultStreaming:  # noqa: PLR0912
         """Process a query using the configured agents.
 
         This method runs asynchronously and processes the provided query
@@ -461,29 +482,31 @@ class DeepResearchAgent:
         # Start new conversation if none exists
         if self.enable_history and not self.current_conversation_id:
             self.start_new_conversation()
-        
+
         # Get conversation context for agent reference
         conversation_context = ""
         if self.enable_history:
             conversation_context = self.get_conversation_context(max_messages=10)
-            
+
             # Check if this is the first user message (set as title)
             current_conv = self.get_conversation(self.current_conversation_id)
             if current_conv and len(current_conv.messages) == 0:
                 # First message - set as conversation title
-                self.history.update_conversation_title(self.current_conversation_id, query)
+                self.history.update_conversation_title(
+                    self.current_conversation_id, query
+                )
                 print(f"Set conversation title to: {query}")
-                
+
                 # Notify title update callbacks
                 for callback in self.title_update_callbacks:
                     try:
                         callback(self.current_conversation_id, query)
                     except Exception as e:
                         print(f"Error in title update callback: {e}")
-            
+
             # Add user message to history
             self.add_message_to_history("user", query)
-        
+
         print(len(self._mcp_servers), "MCP servers to connect")
         for mcp_server in self._mcp_servers:
             try:
@@ -499,7 +522,10 @@ class DeepResearchAgent:
 
         # Enhance query with conversation context
         enhanced_query = query
-        if conversation_context and conversation_context != "No conversation context available.":
+        if (
+            conversation_context
+            and conversation_context != "No conversation context available."
+        ):
             enhanced_query = f"""Previous conversation context:
             {conversation_context}
 
@@ -511,7 +537,7 @@ class DeepResearchAgent:
             response = await self._query_agent(enhanced_query)
         else:
             response = await self._query_sequential(enhanced_query)
-        
+
         # Add assistant response to history
         if self.enable_history:
             response_content = response.final_output_as(str)
