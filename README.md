@@ -39,6 +39,7 @@ DRAFT demonstrates how to build a sophisticated, composable AI agent system for 
 - **Structured outputs**: Pydantic models; safe type conversions
 - **Async-ready**: Concurrent tool calls with rate limiting
 - **Tracing**: Langfuse traces linked to evaluations
+- **Conversation History**: Persistent storage and retrieval of past conversations for context-aware research
 
 ## Installation
 
@@ -50,14 +51,16 @@ DRAFT demonstrates how to build a sophisticated, composable AI agent system for 
 
 ### Setup
 
-1) Clone and install:
+1. Clone and install:
+
 ```bash
 git clone https://github.com/JeiKeiLim/deep-research-agent-framework-toolkit.git
 cd deep-research-agent-framework-toolkit
 uv sync
 ```
 
-2) Configure environment variables by copying `.env.example`:
+2. Configure environment variables by copying `.env.example`:
+
 ```bash
 cp .env.example .env
 # Fill in values in .env
@@ -84,10 +87,12 @@ Set the following environment variables (see `.env.example`):
 - **Perplexity**: `PERPLEXITY_API_KEY`
 - **Tavily**: `TAVILY_API_KEY`
 
-Hydra config lives in `configs/config.yaml` and composes agent configs from `configs/agents/*.yaml`. Two notable toggles:
+Hydra config lives in `configs/config.yaml` and composes agent configs from `configs/agents/*.yaml`. Notable toggles:
 
 - `agent_configs.max_revision`: number of sequential-mode revisions (default: 3)
 - `agent_configs.orchestration_mode`: `agent` or `sequential`
+- `agent_configs.enable_history`: enable conversation history (default: true)
+- `agent_configs.history_storage_dir`: directory for storing conversation files (default: "conversation_history")
 
 You can also override Hydra values via CLI flags if desired.
 
@@ -98,7 +103,17 @@ You can also override Hydra values via CLI flags if desired.
 ```bash
 PYTHONPATH=. uv run --env-file .env apps/gui.py
 ```
+
 Visit `http://localhost:7860`.
+
+### Conversation History Features
+
+The GUI now includes conversation history management:
+
+- **New Conversation**: Start a fresh research session
+- **Conversation Selection**: Switch between different conversation threads
+- **History Search**: Search through past conversations by content
+- **Context Awareness**: Agents can reference previous conversations for better continuity
 
 ### Switch orchestration mode
 
@@ -120,6 +135,7 @@ Requirements:
 
 - Node.js + `npx` for `mcp-remote`
 - Install the ArXiv MCP server (optional pre-install to avoid on-demand install):
+
 ```bash
 uv tool install arxiv-mcp-server
 ```
@@ -143,7 +159,7 @@ deep-research-agent-framework-toolkit/
 │   ├── draft_agents/
 │   │   ├── agent.py                # Agent orchestration + MCP wiring
 │   │   └── function_tools/         # Tooling: Weaviate, Perplexity, Tavily
-│   └── utils/                      # Env, tracing, gradio helpers, etc.
+│   └── utils/                      # Env, tracing, gradio helpers, conversation history, etc.
 ├── tests/                          # Unit/integration tests
 └── pyproject.toml                  # Dependencies and tooling config
 ```

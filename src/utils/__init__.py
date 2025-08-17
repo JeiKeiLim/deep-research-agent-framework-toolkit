@@ -8,3 +8,6 @@ from .gradio.messages import (
 )
 from .langfuse.oai_sdk_setup import setup_langfuse_tracer
 from .pretty_printing import pretty_print
+
+# Import conversation history module
+from . import conversation_history

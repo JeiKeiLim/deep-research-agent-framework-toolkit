@@ -8,6 +8,7 @@ Contact: lim.jeikei@gmail.com
 """
 
 import asyncio
+from datetime import datetime
 from typing import AsyncGenerator
 
 import gradio as gr
@@ -17,6 +18,7 @@ from omegaconf import DictConfig
 
 from src.draft_agents.agent import DeepResearchAgent, DeepResearchProgress
 from src.utils import setup_langfuse_tracer
+from src.utils.conversation_history import Conversation
 
 
 SPINNER_HTML = """
@@ -25,29 +27,9 @@ SPINNER_HTML = """
   <div></div><div></div><div></div><div></div><div></div><div></div>
 </span>
 <style>
-.lds-spinner {
-  display:inline-block;
-  position:relative;
-  width:20px;
-  height:20px;
-  vertical-align:middle;
-  margin-right:6px;
-}
-.lds-spinner div {
-  transform-origin:10px 10px;
-  animation: lds-spinner 1.2s linear infinite;
-}
-.lds-spinner div:after {
-  content:" ";
-  display:block;
-  position:absolute;
-  top:1px;
-  left:9px;
-  width:2px;
-  height:5px;
-  border-radius:20%;
-  background:#333;
-}
+.lds-spinner { display:inline-block; position:relative; width:20px; height:20px; vertical-align:middle; margin-right:6px; }
+.lds-spinner div { transform-origin:10px 10px; animation: lds-spinner 1.2s linear infinite; }
+.lds-spinner div:after { content:" "; display:block; position:absolute; top:1px; left:9px; width:2px; height:5px; border-radius:20%; background:#333; }
 .lds-spinner div:nth-child(1)  { transform: rotate(0deg);   animation-delay:-1.1s; }
 .lds-spinner div:nth-child(2)  { transform: rotate(30deg);  animation-delay:-1.0s; }
 .lds-spinner div:nth-child(3)  { transform: rotate(60deg);  animation-delay:-0.9s; }
@@ -66,150 +48,175 @@ SPINNER_HTML = """
 
 
 class DeepResearchAgentGUI:
-    """A class representing the Deep Research Agent GUI.
-
-    This class initializes the Gradio interface for the Deep Research Agent GUI,
-    allowing users to interact with the agent framework through a web interface.
-    """
+    """A class representing the Deep Research Agent GUI."""
 
     def __init__(self, cfg: DictConfig) -> None:
-        """Initialize the Deep Research Agent GUI.
-
-        Args:
-            cfg: The configuration dictionary for the agent.
-        """
         self.app = self._create_gui()
         self.agent = DeepResearchAgent(cfg.agents, **cfg.agent_configs)
         self.progress_queue = asyncio.Queue()
         self.agent.add_progress_callback(
             lambda progress: self.progress_queue.put_nowait(progress)
         )
+        
+        # 제목 업데이트 콜백 등록
+        self.agent.add_title_update_callback(self._on_title_updated)
 
+        # UI handles (assigned in _create_gui)
         self._chatbot: gr.Chatbot
         self._chat_message: gr.Textbox
-        # No global intermediate panel; per-query details live inside Chatbot messages
+        self._conv_dropdown: gr.Dropdown
+        self._search_query: gr.Textbox
+        self._search_btn: gr.Button
+        self._search_dropdown: gr.Dropdown
+        self._new_btn: gr.Button
+        self._delete_btn: gr.Button
+        self._current_info: gr.Markdown
+
+        # Internal mapping: label <-> id (for reference, actual Dropdown uses (label,id) tuple)
+        self._label_to_id: dict[str, str] = {}
+        self._id_to_label: dict[str, str] = {}
+
+        # Initialize after GUI is created
+        self._initialize_conversation_history()
+
+    # ---------- Helpers (mapping / labels) ----------
+
+    def _build_label(self, conv: Conversation) -> str:
+        title = conv.title if conv.title and conv.title.strip() else "No title"
+        return f"{title} | {conv.created_at.strftime('%Y-%m-%d %H:%M')} | {len(conv.messages)}개"
+
+    def _get_default_title(self) -> str:
+        return "New chat"
+
+    def _create_chat_messages(self, conversation) -> list[ChatMessage]:
+        return [
+            ChatMessage(role=("user" if m.role == "user" else "assistant"), content=m.content)
+            for m in conversation.messages
+        ]
+
+    def _create_info_text(self, conversation, title_override: str = None) -> str:
+        title = title_override or conversation.title or self._get_default_title()
+        return (f"**Current Chat:** {title}\n"
+                f"**Created at:** {conversation.created_at.strftime('%Y-%m-%d %H:%M')}\n"
+                f"**Message count:** {len(conversation.messages)}")
+
+    def _rebuild_maps(self) -> list[tuple[str, str]]:
+        """Rebuild label/id maps and return Dropdown choices as (label, value=id)."""
+        if not hasattr(self.agent, "get_all_conversations"):
+            return []
+        convs = self.agent.get_all_conversations() or []
+        convs.sort(key=lambda x: x.updated_at, reverse=True)
+
+        self._label_to_id.clear()
+        self._id_to_label.clear()
+
+        choices: list[tuple[str, str]] = []
+        for c in convs:
+            label = self._build_label(c)
+            choices.append((label, c.id))
+            self._label_to_id[label] = c.id
+            self._id_to_label[c.id] = label
+        return choices
+
+    # ---------- Initialization ----------
+
+    def _initialize_conversation_history(self) -> None:
+        print("Initializing conversation history...")
+        if getattr(self.agent, "enable_history", False):
+            if not self.agent.current_conversation_id:
+                print("No current conversation, creating one...")
+                self.agent.start_new_conversation()
+
+            # Ensure at least one conversation exists
+            if not self.agent.get_all_conversations():
+                self.agent.start_new_conversation()
+
+            choices = self._rebuild_maps()  # [(label, id)]
+            print(f"Initial conv count: {len(choices)}")
+            if hasattr(self, "_conv_dropdown"):
+                self._conv_dropdown.choices = choices
+                cur_id = self.agent.current_conversation_id
+                self._conv_dropdown.value = cur_id if cur_id else (choices[0][1] if choices else None)
+
+            if self.agent.current_conversation_id:
+                cur = self.agent.get_conversation(self.agent.current_conversation_id)
+                if cur:
+                    self._update_current_conversation_info(cur)
+        else:
+            print("History not enabled")
+
+    # ---------- App ----------
 
     def start(self) -> None:
-        """Start the Gradio app."""
-        self.app.launch(
-            server_name="0.0.0.0", server_port=7860, share=False, debug=True
-        )
+        self.app.launch(server_name="0.0.0.0", server_port=7860, share=False, debug=True)
 
     async def _process_query(
-        self,
-        query: str,
-        gr_messages: list[ChatMessage],
+        self, query: str, gr_messages: list[ChatMessage]
     ) -> AsyncGenerator[dict, None]:
-        """Process the user's question and return the updated chat messages.
-
-        The method appends the user's message, creates a temporary assistant
-        message that aggregates intermediate progress in a collapsible section,
-        and updates it live until the final answer replaces the draft.
-
-        Args:
-            query: The user's question to be processed.
-            gr_messages: The current chat messages in the Gradio interface.
-
-        Returns
-        -------
-            AsyncGenerator[dict, None]: An asynchronous generator yielding
-            dictionaries to update Gradio components.
-        """
-        # Append the user's message
+        """Process the user's question and return the updated chat messages."""
+        # Add user message
         gr_messages.append(ChatMessage(role="user", content=query))
-
-        # Initial UI update: clear the input and show disabled state
         yield {
             self._chatbot: gr_messages,
-            self._chat_message: gr.update(
-                value="", placeholder="Thinking...", interactive=False
-            ),
+            self._chat_message: gr.update(value="", placeholder="Thinking...", interactive=False),
         }
 
-        # Drain any stale progress in the queue from previous runs
+        # Drain stale progress
         while not self.progress_queue.empty():
             try:
                 _ = self.progress_queue.get_nowait()
             except Exception:
                 break
 
-        # Start the agent query
-        agent_task = asyncio.create_task(self.agent.query(query))
+        # Run agent
+        task = asyncio.create_task(self.agent.query(query))
 
-        # Prepare intermediate aggregation and insert a temporary assistant message
-        intermediate_steps: list[str] = []
-        temp_assistant_index = len(gr_messages)
+        # Temp assistant message
+        steps: list[str] = []
+        idx = len(gr_messages)
         gr_messages.append(
             ChatMessage(
                 role="assistant",
                 content=self._compose_progress_message(
-                    intermediate_steps=intermediate_steps,
-                    latest_step=None,
-                    progress_label="Starting...",
+                    intermediate_steps=steps, latest_step=None, progress_label="Starting..."
                 ),
             )
         )
-
-        # Yield to render the temporary assistant message
         yield {self._chatbot: gr_messages}
 
-        # Stream and aggregate progress updates
-        while not agent_task.done():
+        # Stream progress
+        while not task.done():
             try:
-                progress: DeepResearchProgress = await asyncio.wait_for(
-                    self.progress_queue.get(), timeout=0.1
-                )
-                # Stack unique steps; always keep the latest for drafting message
-                if (
-                    not intermediate_steps
-                    or intermediate_steps[-1] != progress.progress_text
-                ):
-                    intermediate_steps.append(progress.progress_text)
-
-                progress_label = f"{progress.progress_percentage:.1%}"
-
-                # Update the temporary assistant message content with
-                # latest step + stacked details
-                latest_step = intermediate_steps[-1] if intermediate_steps else None
-                gr_messages[temp_assistant_index] = ChatMessage(
+                prog: DeepResearchProgress = await asyncio.wait_for(self.progress_queue.get(), timeout=0.1)
+                if not steps or steps[-1] != prog.progress_text:
+                    steps.append(prog.progress_text)
+                label = f"{prog.progress_percentage:.1%}"
+                latest = steps[-1] if steps else None
+                gr_messages[idx] = ChatMessage(
                     role="assistant",
                     content=self._compose_progress_message(
-                        intermediate_steps=intermediate_steps,
-                        latest_step=latest_step,
-                        progress_label=progress_label,
+                        intermediate_steps=steps, latest_step=latest, progress_label=label
                     ),
                 )
-
-                # Yield the updated chat only
-                # (per-message intermediate lives in Chatbot)
                 yield {self._chatbot: gr_messages}
             except asyncio.TimeoutError:
-                # No progress right now; continue polling
                 pass
 
-        # Finalize: replace the temporary assistant message with the final answer
-        agent_result = await agent_task
-        gr_messages[temp_assistant_index] = ChatMessage(
+        # Finalize
+        result = await task
+        gr_messages[idx] = ChatMessage(
             role="assistant",
             content=self._compose_progress_message(
-                intermediate_steps=intermediate_steps,
-                label_text="🎉🎊🥳 Research complete.",
-                latest_step=None,  # No latest step in final answer
-                progress_label="100%",
+                intermediate_steps=steps, label_text="🎉🎊🥳 Research complete.", latest_step=None, progress_label="100%"
             ),
         )
-
-        final_answer_text = "---\n" + agent_result.final_output_as(str)
-        # Post final answer as a new assistant message (separate from drafting/progress)
-        gr_messages.append(ChatMessage(role="assistant", content=final_answer_text))
-
-        # Yield the final result and re-enable input
+        gr_messages.append(ChatMessage(role="assistant", content="---\n" + result.final_output_as(str)))
         yield {
             self._chatbot: gr_messages,
-            self._chat_message: gr.update(
-                placeholder="Ask a question", interactive=True
-            ),
+            self._chat_message: gr.update(placeholder="Ask a question", interactive=True),
         }
+
+    # ---------- UI composition helpers ----------
 
     def _compose_progress_message(
         self,
@@ -219,85 +226,278 @@ class DeepResearchAgentGUI:
         latest_step: str | None,
         progress_label: str | None,
     ) -> str:
-        """Compose per-query progress content embedded in the Chatbot message.
-
-        Renders a folded details block stacking all steps and a 'Drafting answer...'
-        section that shows only the latest step.
-        """
-        title = "Intermediate steps"
-        if progress_label:
-            title = f"{title} — {progress_label}"
-
+        title = "Intermediate steps" + (f" — {progress_label}" if progress_label else "")
         steps_md = self._format_intermediate_steps(intermediate_steps)
-        # Default folded; do not set 'open' so folded state persists (stays folded)
-        details_block = (
+        details = (
             f"<details>\n"
             f"  <summary><strong>{title}</strong> (click to expand)</summary>\n\n"
             f"{steps_md}\n"
             f"</details>"
         )
-
         drafting = label_text
         if latest_step:
-            safe_step = latest_step.replace("```", "\u0060\u0060\u0060")
-            drafting = f"{drafting}\n\n{safe_step}"
-
-        return f"{details_block}\n\n{drafting}"
+            safe = latest_step.replace("```", "\u0060\u0060\u0060")
+            drafting = f"{drafting}\n\n{safe}"
+        return f"{details}\n\n{drafting}"
 
     def _format_intermediate_steps(self, steps: list[str]) -> str:
-        """Return Markdown list formatting for intermediate steps.
-
-        Falls back to a placeholder when there are no steps yet.
-        """
         if not steps:
             return "No intermediate steps yet."
+        return "\n".join(f"{i}. {s.replace('```', '\u0060\u0060\u0060')}" for i, s in enumerate(steps, 1))
 
-        # Number the steps for readability
-        lines = []
-        for index, step in enumerate(steps, start=1):
-            # Escape triple backticks from steps to avoid breaking Markdown
-            safe_step = step.replace("```", "\u0060\u0060\u0060")
-            lines.append(f"{index}. {safe_step}")
-        return "\n".join(lines)
+    # ---------- GUI ----------
 
     def _create_gui(self) -> gr.Blocks:
-        """Create and return the Gradio app."""
         with gr.Blocks(title="DRAFT - Deep Research Agent Framework Toolkit") as app:
-            gr.HTML(  # Make progress text darker
+            gr.HTML(
                 """
                 <style>
-                    #chat-message::placeholder {
-                        color: #4A5568; /* Darker gray for placeholder text */
-                        opacity: 1;
-                    }
+                  #chat-message::placeholder { color:#4A5568; opacity:1; }
+                  .sidebar button { width:100% !important; margin-bottom:12px; padding:8px 16px; font-size:14px; border-radius:6px; }
+                  .sidebar .gr-form { width:100%; }
+                  .sidebar .gr-markdown { margin-bottom:16px; margin-top:20px; }
+                  .sidebar .gr-textbox { width:100% !important; margin-bottom:12px; }
+                  .sidebar > div { margin-bottom:20px; }
+                  .sidebar button[data-variant="primary"] { background-color:#3b82f6; border-color:#3b82f6; }
+                  .sidebar button[data-variant="secondary"] { background-color:#6b7280; border-color:#6b7280; }
+                  .sidebar button[data-variant="stop"] { background-color:#ef4444; border-color:#ef4444; }
                 </style>
                 """
             )
-            gr.Markdown("# Deep Research Agent GUI")
-            gr.Markdown(
-                "This is a simple Gradio interface for the Deep Research Agent GUI."
-            )
-            self._chatbot = gr.Chatbot(type="messages", label="Agent", height=800)
-            self._chat_message = gr.Textbox(
-                elem_id="chat-message",
-                placeholder="Ask a question",
-                show_label=False,
-                lines=1,
-                submit_btn=True,
-            )
+            gr.Markdown("# Deep Research Agent")
+            gr.Markdown("A multi-agent research framework that uses AI agents to plan, search, synthesize, and critique to produce high-quality research answers with live progress and observability.")
 
+            with gr.Row():
+                # ---------- Sidebar only ----------
+                with gr.Column(scale=1, min_width=340, elem_classes=["sidebar"]):
+                    self._new_btn = gr.Button("Start New Chat", variant="primary")
+
+                    gr.Markdown("### 📚 Chat List")
+                    self._conv_dropdown = gr.Dropdown(
+                        label="Select a chat",
+                        choices=[],   # [(label, id)]
+                        value=None,   # id
+                        interactive=True,
+                    )
+
+                    self._delete_btn = gr.Button("Delete Selected Chat", variant="stop")
+
+                    gr.Markdown("### 🔍 Search Chat")
+                    self._search_query = gr.Textbox(placeholder="Search chat", lines=1, show_label=False)
+                    self._search_btn = gr.Button("Search", variant="secondary")
+                    self._search_dropdown = gr.Dropdown(
+                        label="Select from search results",
+                        choices=[],    # [(label, id)]
+                        value=None,    # id
+                        interactive=True,
+                        visible=False,
+                    )
+
+                    self._current_info = gr.Markdown("**Current Chat:** New Chat")
+
+                # ---------- Main chat ----------
+                with gr.Column(scale=3):
+                    self._chatbot = gr.Chatbot(type="messages", label="Agent", height=700)
+                    self._chat_message = gr.Textbox(
+                        elem_id="chat-message",
+                        placeholder="Enter your question",
+                        show_label=False,
+                        lines=1,
+                        submit_btn=True,
+                    )
+
+            # ---------- Events ----------
+            # Send message
             self._chat_message.submit(
                 self._process_query,
                 [self._chat_message, self._chatbot],
                 [self._chatbot, self._chat_message],
             )
 
+            # New chat
+            self._new_btn.click(
+                self._create_new_conversation,
+                outputs=[self._chatbot, self._chat_message, self._current_info, self._conv_dropdown],
+            )
+
+            # Select chat (Dropdown -> value=id)
+            self._conv_dropdown.change(
+                self._switch_conversation,          # def _switch_conversation(self, conv_id: str)
+                inputs=[self._conv_dropdown],       # value=id
+                outputs=[self._chatbot, self._chat_message, self._current_info],
+            )
+
+            # Search
+            self._search_btn.click(
+                self._search_conversation_history,
+                inputs=[self._search_query],
+                outputs=[self._search_dropdown, self._search_query],
+            )
+
+            # Select search result → switch + sync main dropdown
+            self._search_dropdown.change(
+                self._switch_conversation_and_sync,     # def _switch_conversation_and_sync(self, conv_id: str)
+                inputs=[self._search_dropdown],
+                outputs=[self._chatbot, self._chat_message, self._current_info, self._conv_dropdown],
+            )
+
+            # Delete
+            self._delete_btn.click(
+                self._delete_current_conversation,
+                outputs=[self._chatbot, self._chat_message, self._current_info, self._conv_dropdown],
+            )
+
             return app
+
+    # ---------- Sidebar actions ----------
+    def _search_conversation_history(self, query: str):
+        """Search conversation history and show results in the search dropdown.
+
+        Returns:
+            tuple[gr.update, gr.update]:
+                - 1st: update for self._search_dropdown (choices as (label, id), value=None, visible flag)
+                - 2nd: update for self._search_query (clear the textbox)
+        """
+        # If no search query or search feature not supported, hide
+        if not hasattr(self.agent, "search_history") or not query.strip():
+            return gr.update(visible=False), gr.update()
+
+        results = self.agent.search_history(query.strip()) or []
+        if not results:
+            return gr.update(visible=False), gr.update()
+
+        choices = [(self._build_label(c), c.id) for c in results]
+
+        return gr.update(choices=choices, value=None, visible=True), gr.update(value="")
+
+    def _update_conv_dropdown(self, select_id: str | None = None) -> gr.update:
+        choices = self._rebuild_maps()  # [(label, id)]
+        if select_id:
+            value = select_id
+        elif self.agent.current_conversation_id:
+            value = self.agent.current_conversation_id
+        else:
+            value = choices[0][1] if choices else None
+        return gr.update(choices=choices, value=value)
+
+    def _create_new_conversation(self) -> tuple:
+        if not hasattr(self.agent, "start_new_conversation"):
+            return gr.update(), gr.update(), gr.update(), gr.update()
+        print("Creating new conversation...")
+        new_id = self.agent.start_new_conversation()
+        print("Created:", new_id)
+
+        info = self._create_info_text(
+            self.agent.get_conversation(new_id), 
+            title_override=self._get_default_title()
+        )
+
+        return (
+            gr.update(value=[]),             # chatbot clear
+            gr.update(value=""),             # textbox clear
+            gr.update(value=info),           # info
+            self._update_conv_dropdown(select_id=new_id),  # dropdown updated & selected
+        )
+
+    def _switch_conversation_and_sync(self, conv_id: str) -> tuple:
+        """Switch from search dropdown then sync main dropdown selection."""
+        updates = self._switch_conversation(conv_id)  # 3 outputs
+        dd_update = self._update_conv_dropdown(select_id=conv_id)
+        return (*updates, dd_update)
+
+    def _delete_current_conversation(self) -> tuple:
+        if not hasattr(self.agent, "get_all_conversations"):
+            return gr.update(), gr.update(), gr.update(), gr.update()
+        cur_id = getattr(self.agent, "current_conversation_id", None)
+        if not cur_id:
+            return gr.update(), gr.update(), gr.update(), gr.update()
+
+        current = self.agent.get_conversation(cur_id)
+        if not current:
+            return gr.update(), gr.update(), gr.update(), gr.update()
+
+        print("Deleting conversation:", current.title)
+        if hasattr(self.agent, "history") and self.agent.history:
+            _ = self.agent.history.delete_conversation(cur_id)
+
+        # pick next
+        convs = self.agent.get_all_conversations() or []
+        remaining = [c for c in convs if c.id != cur_id]
+        if remaining:
+            remaining.sort(key=lambda x: x.updated_at, reverse=True)
+            self.agent.switch_conversation(remaining[0].id)
+            new_current = remaining[0]
+        else:
+            self.agent.start_new_conversation()
+            new_current = self.agent.get_conversation(self.agent.current_conversation_id)
+
+        if new_current:
+            chats = self._create_chat_messages(new_current)
+            info = self._create_info_text(new_current)
+            new_id = new_current.id
+        else:
+            chats = []
+            info = self._create_info_text(
+                None, 
+                title_override=self._get_default_title()
+            )
+            new_id = getattr(new_current, "id", None)
+
+        return (
+            gr.update(value=chats),
+            gr.update(value=""),
+            gr.update(value=info),
+            self._update_conv_dropdown(select_id=new_id),
+        )
+
+    # ---------- Core switching ----------
+
+    def _switch_conversation(self, conv_id: str) -> tuple:
+        if not hasattr(self.agent, "switch_conversation") or not conv_id:
+            return gr.update(), gr.update(), gr.update()
+
+        print("Switching to conversation:", conv_id)
+        ok = self.agent.switch_conversation(conv_id)
+        if not ok:
+            return gr.update(), gr.update(), gr.update()
+
+        conv = self.agent.get_conversation(conv_id)
+        if not conv:
+            return gr.update(), gr.update(), gr.update()
+
+        chats = self._create_chat_messages(conv)
+        self._update_current_conversation_info(conv)
+
+        info = self._create_info_text(conv)
+        return gr.update(value=chats), gr.update(value=""), gr.update(value=info)
+
+    def _update_current_conversation_info(self, conversation) -> None:
+        if hasattr(self, "_current_info") and conversation:
+            info = self._create_info_text(conversation)
+            self._current_info.value = info
+
+    def _on_title_updated(self, conversation_id: str, new_title: str) -> None:
+        """Callback for when the title of a conversation is updated."""
+        print(f"Title updated for conversation {conversation_id}: {new_title}")
+        
+        # 대화 목록 새로고침
+        self._rebuild_maps()
+        
+        # 현재 대화 정보 업데이트
+        if self.agent.current_conversation_id == conversation_id:
+            current_conv = self.agent.get_conversation(conversation_id)
+            if current_conv:
+                self._update_current_conversation_info(current_conv)
+        
+        # 드롭다운 업데이트
+        if hasattr(self, '_conv_dropdown'):
+            self._conv_dropdown.choices = self._rebuild_maps()
+            if self.agent.current_conversation_id:
+                self._conv_dropdown.value = self.agent.current_conversation_id
 
 
 @hydra.main(version_base=None, config_path="../configs", config_name="config")
 def main(cfg: DictConfig) -> None:
-    """Load the configuration using Hydra."""
     setup_langfuse_tracer()
     gui_app = DeepResearchAgentGUI(cfg)
     gui_app.start()
