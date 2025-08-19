@@ -4,15 +4,15 @@ Tools to manage conversation history for the Deep Research Agent.
 Enables referencing past conversations and maintaining context
 across sessions.
 
-Author: Jongkuk Lim
-Contact: lim.jeikei@gmail.com
+Author: Rijoo Kim
+Contact: gureme1121@gmail.com
 """
 
 import json
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 
 @dataclass
@@ -316,3 +316,240 @@ class ConversationHistory:
             return "No conversation context available."
 
         return conversation.get_context_summary(max_messages)
+
+
+class ConversationManager:
+    """Manages conversation lifecycle and provides enhanced conversation context.
+    
+    This class handles the complete conversation management including:
+    - Starting new conversations
+    - Managing conversation context
+    - Handling title updates with callbacks
+    - Providing enhanced queries with conversation context
+    """
+
+    def __init__(self, history: ConversationHistory, max_messages: int = 5):
+        """Initialize conversation manager.
+        
+        Args:
+            history: ConversationHistory instance for storage operations
+            max_messages: Default maximum number of recent messages to include in context
+        """
+        self.history = history
+        self.max_messages = max_messages
+        self.current_conversation_id: Optional[str] = None
+        self.title_update_callbacks: List[Callable[[str, str], None]] = []
+
+    def add_title_update_callback(self, callback: Callable[[str, str], None]) -> None:
+        """Add a title update callback.
+        
+        Args:
+            callback: A callable that takes (conversation_id, new_title) as arguments.
+        """
+        self.title_update_callbacks.append(callback)
+
+    def remove_title_update_callback(self, callback: Callable[[str, str], None]) -> None:
+        """Remove a title update callback.
+        
+        Args:
+            callback: A callable that was previously registered.
+        """
+        if callback in self.title_update_callbacks:
+            self.title_update_callbacks.remove(callback)
+
+    def start_new_conversation(self, title: str = None) -> str:
+        """Start a new conversation session.
+        
+        Args:
+            title: Optional title for the conversation. If None, will use timestamp.
+            
+        Returns:
+            Conversation ID
+        """
+        if title is None:
+            title = f"Conversation {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+
+        self.current_conversation_id = self.history.create_conversation(title)
+        return self.current_conversation_id
+
+    def get_enhanced_query(self, query: str, max_messages: int = 10) -> str:
+        """Get enhanced query with conversation context and manage conversation lifecycle.
+        
+        This method handles:
+        1. Starting new conversation if none exists
+        2. Setting conversation title for first message
+        3. Adding user message to history
+        4. Returning enhanced query with conversation context
+        
+        Args:
+            query: The user's query
+            max_messages: Maximum number of recent messages to include in context
+            
+        Returns:
+            Enhanced query with conversation context
+        """
+        # Start new conversation if none exists
+        if not self.current_conversation_id:
+            self.start_new_conversation()
+
+        # Get conversation context for agent reference
+        conversation_context = self.history.get_conversation_context(
+            self.current_conversation_id, max_messages
+        )
+
+        # Check if this is the first user message (set as title)
+        current_conv = self.history.get_conversation(self.current_conversation_id)
+        if current_conv and len(current_conv.messages) == 0:
+            # First message - set as conversation title
+            self.history.update_conversation_title(
+                self.current_conversation_id, query
+            )
+            print(f"Set conversation title to: {query}")
+
+            # Notify title update callbacks
+            for callback in self.title_update_callbacks:
+                try:
+                    callback(self.current_conversation_id, query)
+                except Exception as e:
+                    print(f"Error in title update callback: {e}")
+
+        # Add user message to history
+        self.history.add_message(self.current_conversation_id, "user", query)
+
+        # Return enhanced query with conversation context
+        if (
+            conversation_context
+            and conversation_context != "No conversation context available."
+        ):
+            return f"""Previous conversation context:
+            {conversation_context}
+
+            Current question: {query}
+
+            Please answer by referring to the previous conversation above, and maintain continuity with it in your response."""
+        
+        return query
+
+    def add_assistant_message(self, content: str, metadata: Optional[Dict[str, Any]] = None) -> bool:
+        """Add assistant response to conversation history.
+        
+        Args:
+            content: The assistant's response content
+            metadata: Optional metadata
+            
+        Returns:
+            True if successful, False if no current conversation
+        """
+        if not self.current_conversation_id:
+            return False
+            
+        return self.history.add_message(
+            self.current_conversation_id, "assistant", content, metadata
+        )
+
+    def get_conversation_context(self, max_messages: int = None) -> str:
+        """Get current conversation context for agent reference.
+        
+        Args:
+            max_messages: Maximum number of recent messages to include.
+                         If None, uses the configured default value.
+            
+        Returns:
+            Context string for the agent
+        """
+        if not self.current_conversation_id:
+            return "No conversation context available."
+
+        # Use configured default if max_messages is not specified
+        if max_messages is None:
+            max_messages = self.max_messages
+
+        return self.history.get_conversation_context(
+            self.current_conversation_id, max_messages
+        )
+
+    def search_history(self, query: str, max_results: int = 10) -> List[Conversation]:
+        """Search conversation history.
+        
+        Args:
+            query: Search query
+            max_results: Maximum number of results to return
+            
+        Returns:
+            List of matching conversations
+        """
+        return self.history.search_conversations(query, max_results)
+
+    def get_all_conversations(self) -> List[Conversation]:
+        """Get all conversations.
+        
+        Returns:
+            List of all conversations
+        """
+        return self.history.get_all_conversations()
+
+    def switch_conversation(self, conversation_id: str) -> bool:
+        """Switch to a different conversation.
+        
+        Args:
+            conversation_id: ID of the conversation to switch to
+            
+        Returns:
+            True if successful, False if conversation not found
+        """
+        if conversation_id in self.history.conversations:
+            self.current_conversation_id = conversation_id
+            return True
+        return False
+
+    def get_conversation(self, conversation_id: str):
+        """Get a conversation by ID.
+        
+        Args:
+            conversation_id: ID of the conversation
+            
+        Returns:
+            Conversation object or None if not found
+        """
+        return self.history.get_conversation(conversation_id)
+
+    # Convenience methods for external access
+    def get_current_conversation_id(self) -> Optional[str]:
+        """Get the current conversation ID.
+        
+        Returns:
+            Current conversation ID or None if no conversation is active
+        """
+        return self.current_conversation_id
+
+    def is_conversation_active(self) -> bool:
+        """Check if there's an active conversation.
+        
+        Returns:
+            True if there's an active conversation, False otherwise
+        """
+        return self.current_conversation_id is not None
+
+    def get_conversation_title(self) -> Optional[str]:
+        """Get the title of the current conversation.
+        
+        Returns:
+            Conversation title or None if no conversation is active
+        """
+        if not self.current_conversation_id:
+            return None
+            
+        conversation = self.history.get_conversation(self.current_conversation_id)
+        return conversation.title if conversation else None
+
+    def get_conversation_message_count(self) -> int:
+        """Get the number of messages in the current conversation.
+        
+        Returns:
+            Number of messages in the current conversation, 0 if no conversation
+        """
+        if not self.current_conversation_id:
+            return 0
+            
+        conversation = self.history.get_conversation(self.current_conversation_id)
+        return len(conversation.messages) if conversation else 0
