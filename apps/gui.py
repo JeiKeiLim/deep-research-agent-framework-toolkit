@@ -58,8 +58,13 @@ class DeepResearchAgentGUI:
         )
 
         # 제목 업데이트 콜백 등록
-        if hasattr(self.agent, 'conversation_manager') and self.agent.conversation_manager:
-            self.agent.conversation_manager.add_title_update_callback(self._on_title_updated)
+        if (
+            hasattr(self.agent, "conversation_manager")
+            and self.agent.conversation_manager
+        ):
+            self.agent.conversation_manager.add_title_update_callback(
+                self._on_title_updated
+            )
 
         # UI handles (assigned in _create_gui)
         self._chatbot: gr.Chatbot
@@ -107,7 +112,10 @@ class DeepResearchAgentGUI:
 
     def _rebuild_maps(self) -> list[tuple[str, str]]:
         """Rebuild label/id maps and return Dropdown choices as (label, value=id)."""
-        if not hasattr(self.agent, "conversation_manager") or not self.agent.conversation_manager:
+        if (
+            not hasattr(self.agent, "conversation_manager")
+            or not self.agent.conversation_manager
+        ):
             return []
         convs = self.agent.conversation_manager.get_all_conversations() or []
         convs.sort(key=lambda x: x.updated_at, reverse=True)
@@ -127,7 +135,11 @@ class DeepResearchAgentGUI:
 
     def _initialize_conversation_history(self) -> None:
         print("Initializing conversation history...")
-        if getattr(self.agent, "enable_history", False) and hasattr(self.agent, "conversation_manager") and self.agent.conversation_manager:
+        if (
+            getattr(self.agent, "enable_history", False)
+            and hasattr(self.agent, "conversation_manager")
+            and self.agent.conversation_manager
+        ):
             if not self.agent.conversation_manager.current_conversation_id:
                 print("No current conversation, creating one...")
                 self.agent.conversation_manager.start_new_conversation()
@@ -146,7 +158,9 @@ class DeepResearchAgentGUI:
                 )
 
             if self.agent.conversation_manager.current_conversation_id:
-                cur = self.agent.conversation_manager.get_conversation(self.agent.conversation_manager.current_conversation_id)
+                cur = self.agent.conversation_manager.get_conversation(
+                    self.agent.conversation_manager.current_conversation_id
+                )
                 if cur:
                     self._update_current_conversation_info(cur)
         else:
@@ -432,8 +446,13 @@ class DeepResearchAgentGUI:
             value = choices[0][1] if choices else None
         return gr.update(choices=choices, value=value)
 
-    def _create_new_conversation(self) -> tuple[gr.update, gr.update, gr.update, gr.update]:
-        if not hasattr(self.agent, "conversation_manager") or not self.agent.conversation_manager:
+    def _create_new_conversation(
+        self,
+    ) -> tuple[gr.update, gr.update, gr.update, gr.update]:
+        if (
+            not hasattr(self.agent, "conversation_manager")
+            or not self.agent.conversation_manager
+        ):
             return gr.update(), gr.update(), gr.update(), gr.update()
         print("Creating new conversation...")
         new_id = self.agent.conversation_manager.start_new_conversation()
@@ -457,8 +476,13 @@ class DeepResearchAgentGUI:
         dd_update = self._update_conv_dropdown(select_id=conv_id)
         return (*updates, dd_update)
 
-    def _delete_current_conversation(self) -> tuple[gr.update, gr.update, gr.update, gr.update]:
-        if not hasattr(self.agent, "conversation_manager") or not self.agent.conversation_manager:
+    def _delete_current_conversation(
+        self,
+    ) -> tuple[gr.update, gr.update, gr.update, gr.update]:
+        if (
+            not hasattr(self.agent, "conversation_manager")
+            or not self.agent.conversation_manager
+        ):
             return gr.update(), gr.update(), gr.update(), gr.update()
         cur_id = self.agent.conversation_manager.current_conversation_id
         if not cur_id:
@@ -505,8 +529,14 @@ class DeepResearchAgentGUI:
 
     # ---------- Core switching ----------
 
-    def _switch_conversation(self, conv_id: str) -> tuple[gr.update, gr.update, gr.update]  :
-        if not hasattr(self.agent, "conversation_manager") or not self.agent.conversation_manager or not conv_id:
+    def _switch_conversation(
+        self, conv_id: str
+    ) -> tuple[gr.update, gr.update, gr.update]:
+        if (
+            not hasattr(self.agent, "conversation_manager")
+            or not self.agent.conversation_manager
+            or not conv_id
+        ):
             return gr.update(), gr.update(), gr.update()
 
         print("Switching to conversation:", conv_id)
@@ -538,7 +568,9 @@ class DeepResearchAgentGUI:
 
         # 현재 대화 정보 업데이트
         if self.agent.conversation_manager.current_conversation_id == conversation_id:
-            current_conv = self.agent.conversation_manager.get_conversation(conversation_id)
+            current_conv = self.agent.conversation_manager.get_conversation(
+                conversation_id
+            )
             if current_conv:
                 self._update_current_conversation_info(current_conv)
 
@@ -546,7 +578,9 @@ class DeepResearchAgentGUI:
         if hasattr(self, "_conv_dropdown"):
             self._conv_dropdown.choices = self._rebuild_maps()
             if self.agent.conversation_manager.current_conversation_id:
-                self._conv_dropdown.value = self.agent.conversation_manager.current_conversation_id
+                self._conv_dropdown.value = (
+                    self.agent.conversation_manager.current_conversation_id
+                )
 
 
 @hydra.main(version_base=None, config_path="../configs", config_name="config")
