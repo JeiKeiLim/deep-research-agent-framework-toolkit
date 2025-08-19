@@ -10,8 +10,7 @@ Contact: lim.jeikei@gmail.com
 
 import asyncio
 import os
-from datetime import datetime
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple
+from typing import Callable, List, Literal, Tuple
 
 import agents
 from agents.mcp import MCPServer, MCPServerStdio
@@ -27,7 +26,7 @@ from src.draft_agents.output_types import (
     SearchPlan,
     output_types,
 )
-from src.utils.conversation_history import Conversation, ConversationHistory, ConversationManager
+from src.utils.conversation_history import ConversationHistory, ConversationManager
 from src.utils.gradio.messages import oai_agent_stream_to_str_list
 from src.utils.langfuse.shared_client import langfuse_client
 
@@ -180,7 +179,9 @@ class DeepResearchAgent:
         self.max_messages = max_messages
         if self.enable_history:
             self.history = ConversationHistory(history_storage_dir)
-            self.conversation_manager = ConversationManager(self.history, max_messages=self.max_messages)
+            self.conversation_manager = ConversationManager(
+                self.history, max_messages=self.max_messages
+            )
         else:
             self.history = None
             self.conversation_manager = None
@@ -213,8 +214,6 @@ class DeepResearchAgent:
         """
         if callback in self.progress_callbacks:
             self.progress_callbacks.remove(callback)
-
-
 
     def _notify_progress(self, p_percentage: float, p_text: str) -> None:
         """Notify all registered progress callbacks with the current progress.
@@ -325,7 +324,9 @@ class DeepResearchAgent:
         # Get enhanced query with conversation context and manage conversation lifecycle
         enhanced_query = query
         if self.enable_history:
-            enhanced_query = self.conversation_manager.get_enhanced_query(query, max_messages=10)
+            enhanced_query = self.conversation_manager.get_enhanced_query(
+                query, max_messages=10
+            )
 
         print(len(self._mcp_servers), "MCP servers to connect")
         for mcp_server in self._mcp_servers:

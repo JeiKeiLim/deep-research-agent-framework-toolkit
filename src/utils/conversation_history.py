@@ -1,4 +1,5 @@
-"""Conversation History Management (Pydantic v2).
+"""
+Conversation history management utilities.
 
 Tools to manage conversation history for the Deep Research Agent.
 Enables referencing past conversations and maintaining context
@@ -16,20 +17,24 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # ---------------------------
 # Domain Models (Pydantic v2)
 # ---------------------------
 
+
 class MessageRole(str, Enum):
+    """Enumeration for message roles in conversations."""
+
     USER = "user"
     ASSISTANT = "assistant"
 
 
 class Message(BaseModel):
     """Individual message in a conversation."""
+
     model_config = ConfigDict(
         extra="ignore",
         validate_assignment=True,
@@ -44,6 +49,7 @@ class Message(BaseModel):
     @field_validator("content")
     @classmethod
     def content_non_empty(cls, v: str) -> str:
+        """Validate that content is not empty."""
         if not v or not v.strip():
             raise ValueError("content must be a non-empty string")
         return v
@@ -51,13 +57,7 @@ class Message(BaseModel):
 
 class Conversation(BaseModel):
     """A complete conversation session."""
-    model_config = ConfigDict(
-        extra="ignore",
-        validate_assignment=True,
-        str_strip_whitespace=True,
-    )
 
-    # 스키마 버전: 파일 포맷 변경 시 마이그레이션 분기 용도
     schema_version: int = 1
 
     id: str
@@ -70,6 +70,7 @@ class Conversation(BaseModel):
     @field_validator("title")
     @classmethod
     def title_non_empty(cls, v: str) -> str:
+        """Validate that title is not empty."""
         if not v or not v.strip():
             raise ValueError("title must be a non-empty string")
         return v
@@ -84,9 +85,11 @@ class Conversation(BaseModel):
         if isinstance(role, str):
             try:
                 role = MessageRole(role)
-            except ValueError:
-                allowed = f"'{MessageRole.USER.value}' or '{MessageRole.ASSISTANT.value}'"
-                raise ValueError(f"Role must be {allowed}, got '{role}'")
+            except ValueError as err:
+                allowed = (
+                    f"'{MessageRole.USER.value}' or '{MessageRole.ASSISTANT.value}'"
+                )
+                raise ValueError(f"Role must be {allowed}, got '{role}'") from err
 
         self.messages.append(
             Message(role=role, content=content, metadata=metadata or {})
@@ -97,7 +100,7 @@ class Conversation(BaseModel):
         self,
         max_messages: int = 5,
         max_chars: Optional[int] = None,
-        ellipsis: str = "..."
+        ellipsis: str = "...",
     ) -> str:
         """Get a summary of recent conversation context for agent reference."""
         if not self.messages:
@@ -113,10 +116,10 @@ class Conversation(BaseModel):
             lines.append(f"{role_emoji} {msg.role.value}: {text}")
         return "\n".join(lines)
 
-
     def get_searchable_content(self) -> str:
         """Get all content for search purposes."""
         return " ".join(m.content for m in self.messages)
+
 
 class ConversationHistory:
     """Manages conversation history storage and retrieval."""
@@ -175,7 +178,9 @@ class ConversationHistory:
         if not isinstance(title, str) or not title.strip():
             raise ValueError("Title must be a non-empty string")
 
-        if initial_message is not None and (not isinstance(initial_message, str) or not initial_message.strip()):
+        if initial_message is not None and (
+            not isinstance(initial_message, str) or not initial_message.strip()
+        ):
             raise ValueError("Initial message must be a non-empty string if provided")
 
         conversation_id = f"conv_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{len(self.conversations)}"
@@ -268,6 +273,7 @@ class ConversationHistory:
             return "No conversation context available."
         return conv.get_context_summary(max_messages)
 
+
 class ConversationManager:
     """Manages conversation lifecycle and provides enhanced conversation context.
 
@@ -285,19 +291,25 @@ class ConversationManager:
         self.title_update_callbacks: List[Callable[[str, str], None]] = []
 
     def add_title_update_callback(self, callback: Callable[[str, str], None]) -> None:
+        """Add a callback function to be called when conversation title is updated."""
         self.title_update_callbacks.append(callback)
 
-    def remove_title_update_callback(self, callback: Callable[[str, str], None]) -> None:
+    def remove_title_update_callback(
+        self, callback: Callable[[str, str], None]
+    ) -> None:
+        """Remove a title update callback function."""
         if callback in self.title_update_callbacks:
             self.title_update_callbacks.remove(callback)
 
     def start_new_conversation(self, title: Optional[str] = None) -> str:
+        """Start a new conversation with optional title."""
         if title is None:
             title = f"Conversation {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}"
         self.current_conversation_id = self.history.create_conversation(title)
         return self.current_conversation_id
 
     def get_enhanced_query(self, query: str, max_messages: int = 10) -> str:
+        """Get an enhanced query with conversation context."""
         if not isinstance(query, str) or not query.strip():
             raise ValueError("Query must be a non-empty string")
         if not isinstance(max_messages, int) or max_messages < 1:
@@ -334,46 +346,62 @@ class ConversationManager:
             )
         return query
 
-    def add_assistant_message(self, content: str, metadata: Optional[Dict[str, Any]] = None) -> bool:
+    def add_assistant_message(
+        self, content: str, metadata: Optional[Dict[str, Any]] = None
+    ) -> bool:
+        """Add an assistant message to the current conversation."""
         if not self.current_conversation_id:
             return False
-        return self.history.add_message(self.current_conversation_id, MessageRole.ASSISTANT, content, metadata)
+        return self.history.add_message(
+            self.current_conversation_id, MessageRole.ASSISTANT, content, metadata
+        )
 
     def get_conversation_context(self, max_messages: Optional[int] = None) -> str:
+        """Get conversation context for the current conversation."""
         if not self.current_conversation_id:
             return "No conversation context available."
         if max_messages is None:
             max_messages = self.max_messages
-        return self.history.get_conversation_context(self.current_conversation_id, max_messages)
+        return self.history.get_conversation_context(
+            self.current_conversation_id, max_messages
+        )
 
     def search_history(self, query: str, max_results: int = 10) -> List[Conversation]:
+        """Search conversations in history."""
         return self.history.search_conversations(query, max_results)
 
     def get_all_conversations(self) -> List[Conversation]:
+        """Get all conversations from history."""
         return self.history.get_all_conversations()
 
     def switch_conversation(self, conversation_id: str) -> bool:
+        """Switch to a different conversation."""
         if conversation_id in self.history.conversations:
             self.current_conversation_id = conversation_id
             return True
         return False
 
     def get_conversation(self, conversation_id: str) -> Optional[Conversation]:
+        """Get a specific conversation by ID."""
         return self.history.get_conversation(conversation_id)
 
     def get_current_conversation_id(self) -> Optional[str]:
+        """Get the current conversation ID."""
         return self.current_conversation_id
 
     def is_conversation_active(self) -> bool:
+        """Check if there is an active conversation."""
         return self.current_conversation_id is not None
 
     def get_conversation_title(self) -> Optional[str]:
+        """Get the title of the current conversation."""
         if not self.current_conversation_id:
             return None
         conv = self.history.get_conversation(self.current_conversation_id)
         return conv.title if conv else None
 
     def get_conversation_message_count(self) -> int:
+        """Get the number of messages in the current conversation."""
         if not self.current_conversation_id:
             return 0
         conv = self.history.get_conversation(self.current_conversation_id)
