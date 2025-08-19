@@ -401,7 +401,7 @@ class DeepResearchAgentGUI:
             return app
 
     # ---------- Sidebar actions ----------
-    def _search_conversation_history(self, query: str):
+    def _search_conversation_history(self, query: str) -> tuple[gr.update, gr.update]:
         """Search conversation history and update the search dropdown.
 
         Returns
@@ -432,7 +432,7 @@ class DeepResearchAgentGUI:
             value = choices[0][1] if choices else None
         return gr.update(choices=choices, value=value)
 
-    def _create_new_conversation(self) -> tuple:
+    def _create_new_conversation(self) -> tuple[gr.update, gr.update, gr.update, gr.update]:
         if not hasattr(self.agent, "conversation_manager") or not self.agent.conversation_manager:
             return gr.update(), gr.update(), gr.update(), gr.update()
         print("Creating new conversation...")
@@ -457,7 +457,7 @@ class DeepResearchAgentGUI:
         dd_update = self._update_conv_dropdown(select_id=conv_id)
         return (*updates, dd_update)
 
-    def _delete_current_conversation(self) -> tuple:
+    def _delete_current_conversation(self) -> tuple[gr.update, gr.update, gr.update, gr.update]:
         if not hasattr(self.agent, "conversation_manager") or not self.agent.conversation_manager:
             return gr.update(), gr.update(), gr.update(), gr.update()
         cur_id = self.agent.conversation_manager.current_conversation_id
@@ -505,7 +505,7 @@ class DeepResearchAgentGUI:
 
     # ---------- Core switching ----------
 
-    def _switch_conversation(self, conv_id: str) -> tuple:
+    def _switch_conversation(self, conv_id: str) -> tuple[gr.update, gr.update, gr.update]  :
         if not hasattr(self.agent, "conversation_manager") or not self.agent.conversation_manager or not conv_id:
             return gr.update(), gr.update(), gr.update()
 
