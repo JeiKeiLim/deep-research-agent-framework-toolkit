@@ -57,7 +57,7 @@ class DeepResearchAgentGUI:
             lambda progress: self.progress_queue.put_nowait(progress)
         )
 
-        # 제목 업데이트 콜백 등록
+        # Register title update callback
         if (
             hasattr(self.agent, "conversation_manager")
             and self.agent.conversation_manager
@@ -466,10 +466,10 @@ class DeepResearchAgentGUI:
         )
 
         return (
-            gr.update(value=[]),  # chatbot clear
-            gr.update(value=""),  # textbox clear
-            gr.update(value=info),  # info
-            self._update_conv_dropdown(select_id=new_id),  # dropdown updated & selected
+            gr.update(value=[]),
+            gr.update(value=""),
+            gr.update(value=info),
+            self._update_conv_dropdown(select_id=new_id),
         )
 
     def _switch_conversation_and_sync(self, conv_id: str) -> tuple:
@@ -567,10 +567,9 @@ class DeepResearchAgentGUI:
         """Handle title update event for a conversation."""
         print(f"Title updated for conversation {conversation_id}: {new_title}")
 
-        # 대화 목록 새로고침
         self._rebuild_maps()
 
-        # 현재 대화 정보 업데이트
+        #  Update current conversation info
         if self.agent.conversation_manager.current_conversation_id == conversation_id:
             current_conv = self.agent.conversation_manager.get_conversation(
                 conversation_id
@@ -578,7 +577,7 @@ class DeepResearchAgentGUI:
             if current_conv:
                 self._update_current_conversation_info(current_conv)
 
-        # 드롭다운 업데이트
+        #  Update dropdown
         if hasattr(self, "_conv_dropdown"):
             self._conv_dropdown.choices = self._rebuild_maps()
             if self.agent.conversation_manager.current_conversation_id:

@@ -178,14 +178,14 @@ class DeepResearchAgent:
         # History management
         self.enable_history = enable_history
         self.max_messages = max_messages
+        self.history = None
+        self.conversation_manager = None
+
         if self.enable_history:
             self.history = ConversationHistory(history_storage_dir)
             self.conversation_manager = ConversationManager(
                 self.history, max_messages=self.max_messages
             )
-        else:
-            self.history = None
-            self.conversation_manager = None
 
     def add_progress_callback(
         self, callback: Callable[[DeepResearchProgress], None]
@@ -323,11 +323,8 @@ class DeepResearchAgent:
             returns the result.
         """
         # Get enhanced query with conversation context and manage conversation lifecycle
-        enhanced_query = query
         if self.enable_history:
-            enhanced_query = self.conversation_manager.get_enhanced_query(
-                query, max_messages=10
-            )
+            query = self.conversation_manager.get_enhanced_query(query, max_messages=10)
 
         print(len(self._mcp_servers), "MCP servers to connect")
         for mcp_server in self._mcp_servers:
@@ -343,9 +340,9 @@ class DeepResearchAgent:
                 print(f"Error connecting to MCP server {mcp_server.name}: {e}")
 
         if self.orchestration_mode == "agent":
-            response = await self._query_agent(enhanced_query)
+            response = await self._query_agent(query)
         else:
-            response = await self._query_sequential(enhanced_query)
+            response = await self._query_sequential(query)
 
         # Add assistant response to history
         if self.enable_history:
