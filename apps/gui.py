@@ -197,16 +197,16 @@ class DeepResearchAgentGUI:
                 break
 
         # Run agent
-        task = asyncio.create_task(self.agent.query(query))
+        agent_task = asyncio.create_task(self.agent.query(query))
 
         # Temp assistant message
-        steps: list[str] = []
-        idx = len(gr_messages)
+        intermediate_steps: list[str] = []
+        intermediate_assistant_msg_idx = len(gr_messages)
         gr_messages.append(
             ChatMessage(
                 role="assistant",
                 content=self._compose_progress_message(
-                    intermediate_steps=steps,
+                    intermediate_steps=intermediate_steps,
                     latest_step=None,
                     progress_label="Starting...",
                 ),
@@ -215,19 +215,22 @@ class DeepResearchAgentGUI:
         yield {self._chatbot: gr_messages}
 
         # Stream progress
-        while not task.done():
+        while not agent_task.done():
             try:
                 prog: DeepResearchProgress = await asyncio.wait_for(
                     self.progress_queue.get(), timeout=0.1
                 )
-                if not steps or steps[-1] != prog.progress_text:
-                    steps.append(prog.progress_text)
+                if (
+                    not intermediate_steps
+                    or intermediate_steps[-1] != prog.progress_text
+                ):
+                    intermediate_steps.append(prog.progress_text)
                 label = f"{prog.progress_percentage:.1%}"
-                latest = steps[-1] if steps else None
-                gr_messages[idx] = ChatMessage(
+                latest = intermediate_steps[-1] if intermediate_steps else None
+                gr_messages[intermediate_assistant_msg_idx] = ChatMessage(
                     role="assistant",
                     content=self._compose_progress_message(
-                        intermediate_steps=steps,
+                        intermediate_steps=intermediate_steps,
                         latest_step=latest,
                         progress_label=label,
                     ),
@@ -237,11 +240,11 @@ class DeepResearchAgentGUI:
                 pass
 
         # Finalize
-        result = await task
-        gr_messages[idx] = ChatMessage(
+        result = await agent_task
+        gr_messages[intermediate_assistant_msg_idx] = ChatMessage(
             role="assistant",
             content=self._compose_progress_message(
-                intermediate_steps=steps,
+                intermediate_steps=intermediate_steps,
                 label_text="🎉🎊🥳 Research complete.",
                 latest_step=None,
                 progress_label="100%",
@@ -267,6 +270,11 @@ class DeepResearchAgentGUI:
         latest_step: str | None,
         progress_label: str | None,
     ) -> str:
+        """Compose per-query progress content embedded in the Chatbot message.
+
+        Renders a folded details block stacking all steps and a 'Drafting answer...'
+        section that shows only the latest step.
+        """
         title = "Intermediate steps" + (
             f" — {progress_label}" if progress_label else ""
         )
@@ -284,6 +292,10 @@ class DeepResearchAgentGUI:
         return f"{details}\n\n{drafting}"
 
     def _format_intermediate_steps(self, steps: list[str]) -> str:
+        """Return Markdown list formatting for intermediate steps.
+
+        Falls back to a placeholder when there are no steps yet.
+        """
         if not steps:
             return "No intermediate steps yet."
         return "\n".join(

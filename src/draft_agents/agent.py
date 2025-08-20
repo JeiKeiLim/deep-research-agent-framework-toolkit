@@ -323,7 +323,7 @@ class DeepResearchAgent:
             returns the result.
         """
         # Get enhanced query with conversation context and manage conversation lifecycle
-        if self.enable_history:
+        if self.conversation_manager:
             query = self.conversation_manager.get_enhanced_query(query, max_messages=10)
 
         print(len(self._mcp_servers), "MCP servers to connect")
@@ -345,7 +345,7 @@ class DeepResearchAgent:
             response = await self._query_sequential(query)
 
         # Add assistant response to history
-        if self.enable_history:
+        if self.conversation_manager:
             response_content = response.final_output_as(str)
             self.conversation_manager.add_assistant_message(response_content)
 

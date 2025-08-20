@@ -140,7 +140,7 @@ class ConversationHistory:
             try:
                 with open(file_path, encoding="utf-8") as f:
                     raw = f.read()
-                # 레거시 JSON도 받아들이도록 model_validate_json 사용
+                # Use model_validate_json to handle legacy JSON format
                 conv = Conversation.model_validate_json(raw)
                 self.conversations[conv.id] = conv
             except Exception as e:
@@ -151,7 +151,8 @@ class ConversationHistory:
         file_path = self.storage_dir / f"{conversation.id}.json"
         try:
             with open(file_path, "w", encoding="utf-8") as f:
-                # mode="json"로 직렬화(ISO8601 datetime 포함)
+                # Serialization with model_dump(mode="json")
+                # ensures compatibility including ISO8601 datetime format
                 json.dump(
                     conversation.model_dump(mode="json"),
                     f,
@@ -226,7 +227,7 @@ class ConversationHistory:
         conv = self.conversations.get(conversation_id)
         if conv is None:
             return False
-        conv.title = new_title  # validator가 빈 문자열 차단
+        conv.title = new_title  # Blocks empty titles from pydantic validation
         conv.updated_at = datetime.utcnow()
         self._save_conversation(conv)
         return True
@@ -315,14 +316,14 @@ class ConversationManager:
             raise ValueError("max_messages must be a positive integer")
 
         if not self.current_conversation_id:
-            self.start_new_conversation()
+            self.current_conversation_id = self.start_new_conversation()
 
-        # Context before adding new message (기존 동작 유지)
+        # Context before adding new message
         context = self.history.get_conversation_context(
             self.current_conversation_id, max_messages
         )
 
-        # 첫 메시지인 경우 제목을 질의로 설정
+        # If the current conversation has no messages, set the title to the query
         current_conv = self.history.get_conversation(self.current_conversation_id)
         if current_conv and len(current_conv.messages) == 0:
             self.history.update_conversation_title(self.current_conversation_id, query)

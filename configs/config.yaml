@@ -12,7 +12,7 @@ agent_configs:
   orchestration_mode: 'agent' # "agent" or "sequential"
   enable_history: true
   history_storage_dir: 'conversation_history'
-  max_messages: 5 # 대화 히스토리에서 가져올 최대 메시지 수
+  max_messages: 5 # Maximum number of messages to keep in history that will be used for agent's context
 
 evaluation_configs:
   langfuse_dataset_name: 'test_questions'
