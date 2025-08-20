@@ -10,7 +10,8 @@ Contact: lim.jeikei@gmail.com
 
 import asyncio
 import os
-from typing import Callable, List, Literal, Tuple
+from collections.abc import Callable
+from typing import Literal
 
 import agents
 from agents.mcp import MCPServer, MCPServerStdio
@@ -26,6 +27,7 @@ from src.draft_agents.output_types import (
     SearchPlan,
     output_types,
 )
+from src.utils.conversation_history import ConversationHistory, ConversationManager
 from src.utils.gradio.messages import oai_agent_stream_to_str_list
 from src.utils.langfuse.shared_client import langfuse_client
 
@@ -33,7 +35,7 @@ from src.utils.langfuse.shared_client import langfuse_client
 def agent_config_to_agent(
     config: DictConfig,
     openai_client: AsyncOpenAI,
-) -> Tuple[agents.Agent, List[MCPServer]]:
+) -> tuple[agents.Agent, list[MCPServer]]:
     """Convert a DictConfig to an Agent instance.
 
     This function takes a configuration dictionary and converts it into
@@ -53,7 +55,7 @@ def agent_config_to_agent(
         prompt = config.configs.prompt
 
     if os.path.exists(prompt):
-        with open(prompt, "r") as file:
+        with open(prompt) as file:
             prompt = file.read()
 
     if "prompt_args" in config.configs:
@@ -66,12 +68,12 @@ def agent_config_to_agent(
 
     tools = []
     if "function_tools" in config.configs:
-        tools: List[agents.Tool] = [
+        tools: list[agents.Tool] = [
             agents.function_tool(function_tools[tool_name], name_override=tool_name)
             for tool_name in config.configs.function_tools
         ]
 
-    sub_mcp_servers: List[MCPServer] = []
+    sub_mcp_servers: list[MCPServer] = []
     if "sub_agents" in config:
         for sub_agent_name, sub_agent_config in config.sub_agents.items():
             sub_agent, sub_sub_mcp_servers = agent_config_to_agent(
@@ -91,7 +93,7 @@ def agent_config_to_agent(
         # TODO: Find a way to limit the number of parallel tool calls
         model_settings.parallel_tool_calls = False
 
-    mcp_servers: List[MCPServerStdio] = []
+    mcp_servers: list[MCPServerStdio] = []
     if "mcp_servers" in config.configs:
         for mcp_server_name, mcp_server_config in config.configs.mcp_servers.items():
             if (
@@ -146,16 +148,23 @@ class DeepResearchAgent:
         agents_config: DictConfig,
         max_revision: int = 3,
         orchestration_mode: Literal["agent", "sequential"] = "agent",
+        enable_history: bool = True,
+        history_storage_dir: str = "conversation_history",
+        max_messages: int = 5,
     ) -> None:
         """Initialize the Deep Research Agent with the provided configuration.
 
         Args:
             agents_config: Configuration for the agents.
             max_revision: Maximum number of revisions for the agent's output.
+            orchestration_mode: Mode of orchestration ("agent" or "sequential").
+            enable_history: Whether to enable conversation history.
+            history_storage_dir: Directory to store conversation history.
+            max_messages: Maximum number of recent messages to include in context.
         """
         self.orchestration_mode = orchestration_mode
         self._async_openai_client = AsyncOpenAI()
-        self._mcp_servers: List[MCPServer] = []
+        self._mcp_servers: list[MCPServer] = []
         self.agents: dict[str, agents.Agent] = {}
 
         for key, value in agents_config.items():
@@ -166,6 +175,18 @@ class DeepResearchAgent:
         self.progress_callbacks = []
         self.max_revision = max_revision
 
+        # History management
+        self.enable_history = enable_history
+        self.max_messages = max_messages
+        self.history = None
+        self.conversation_manager = None
+
+        if self.enable_history:
+            self.history = ConversationHistory(history_storage_dir)
+            self.conversation_manager = ConversationManager(
+                self.history, max_messages=self.max_messages
+            )
+
     def add_progress_callback(
         self, callback: Callable[[DeepResearchProgress], None]
     ) -> None:
@@ -175,8 +196,9 @@ class DeepResearchAgent:
         called with the current progress of the agent.
 
         Args:
-            callback: A callable that takes a DeepResearchProgress object as an
-            argument.
+            callback:
+                A callable previously registered as a title-update
+                callback.
         """
         self.progress_callbacks.append(callback)
 
@@ -213,7 +235,7 @@ class DeepResearchAgent:
 
     async def _run_search(
         self, search_plan: SearchPlan, revision_header_str: str
-    ) -> List[str]:
+    ) -> list[str]:
         with langfuse_client.start_as_current_span(
             name="DeepResearchAgentFrameworkToolkit._run_search", input=search_plan
         ) as search_span:
@@ -252,7 +274,7 @@ class DeepResearchAgent:
                         )
                     except Exception as e:
                         print(
-                            f"Error during search for '{search_item.search_term}': {str(e)}"
+                            f"Error during search for '{search_item.search_term}': {e!s}"
                         )
                         return search_item, None
                     return search_item, response
@@ -300,6 +322,10 @@ class DeepResearchAgent:
             Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
             returns the result.
         """
+        # Get enhanced query with conversation context and manage conversation lifecycle
+        if self.conversation_manager:
+            query = self.conversation_manager.get_enhanced_query(query, max_messages=10)
+
         print(len(self._mcp_servers), "MCP servers to connect")
         for mcp_server in self._mcp_servers:
             try:
@@ -317,6 +343,11 @@ class DeepResearchAgent:
             response = await self._query_agent(query)
         else:
             response = await self._query_sequential(query)
+
+        # Add assistant response to history
+        if self.conversation_manager:
+            response_content = response.final_output_as(str)
+            self.conversation_manager.add_assistant_message(response_content)
 
         return response
 
@@ -360,7 +391,7 @@ class DeepResearchAgent:
                 agent_span.update(output=response_stream.final_output_as(str))
                 return response_stream
             except Exception as e:
-                error_message = f"The agent encountered an unrecoverable error: {str(e)}\nThis can happen if the agent tries to call a sub-agent that does not exist or with incorrect parameters. The operation will now stop."
+                error_message = f"The agent encountered an unrecoverable error: {e!s}\nThis can happen if the agent tries to call a sub-agent that does not exist or with incorrect parameters. The operation will now stop."
                 self._notify_progress(1.0, error_message)
                 assert response_stream is not None, (
                     "Response stream should not be None if an exception occurs."
@@ -490,7 +521,7 @@ class DeepResearchAgent:
                         )
                         critic_feedback = critic_response.final_output_as(
                             CriticFeedback
-                        )  # noqa
+                        )
                         critic_span.update(output=critic_feedback)
 
                     self._notify_progress(

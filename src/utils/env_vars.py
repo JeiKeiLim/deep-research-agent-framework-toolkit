@@ -32,7 +32,7 @@ class Configs(pydantic.BaseModel):
     # Tavily
     tavily_api_key: str
 
-    def _check_langfuse(self):
+    def _check_langfuse(self) -> None:
         """Ensure that Langfuse pk and sk are in the right place."""
         if not self.langfuse_public_key.startswith("pk-lf-"):
             raise ValueError("LANGFUSE_PUBLIC_KEY should start with pk-lf-")

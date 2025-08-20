@@ -27,3 +27,6 @@ wheels/
 *.DS_Store
 
 outputs/
+
+# Conversation history
+conversation_history/

@@ -9,10 +9,13 @@ defaults:
 
 agent_configs:
   max_revision: 3
-  orchestration_mode: "agent"  # "agent" or "sequential"
+  orchestration_mode: 'agent' # "agent" or "sequential"
+  enable_history: true
+  history_storage_dir: 'conversation_history'
+  max_messages: 5 # Maximum number of messages to keep in history that will be used for agent's context
 
 evaluation_configs:
-  langfuse_dataset_name: "test_questions"
-  run_name: "2025_0806_test_run_03"
+  langfuse_dataset_name: 'test_questions'
+  run_name: '2025_0806_test_run_03'
   run_async: False
   limit: -1

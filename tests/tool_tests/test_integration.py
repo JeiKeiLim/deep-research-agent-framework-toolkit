@@ -1,7 +1,7 @@
 """Test cases for Weaviate integration."""
 
 import json
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
@@ -24,7 +24,7 @@ load_dotenv(verbose=True)
 
 
 @pytest.fixture()
-def configs():
+def configs() -> Configs:
     """Load env var configs for testing."""
     return Configs.from_env_var()
 

@@ -80,8 +80,12 @@ select = [
     "N", # pep8-naming
     "ERA", # eradicate
     "PL", # pylint
+    "PLW", # pylint-warnings
+    "RUF", # ruff
+    "ANN", # flake8-annotations
+    "UP", # pyupgrade
 ]
-fixable = ["A", "B", "COM", "C4", "RET", "SIM", "ICN", "Q", "RSE", "D", "E", "F", "I", "W", "N", "ERA", "PL"]
+fixable = ["A", "B", "COM", "C4", "RET", "SIM", "ICN", "Q", "RSE", "D", "E", "F", "I", "W", "N", "ERA", "PL", "RUF"]
 ignore = [
     "B905", # `zip()` without an explicit `strict=` parameter
     "E501", # line too long

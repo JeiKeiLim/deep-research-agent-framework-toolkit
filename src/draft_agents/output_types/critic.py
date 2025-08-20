@@ -8,8 +8,6 @@ Author: Jongkuk Lim
 Contact: lim.jeikei@gmail.com
 """
 
-from typing import List
-
 from pydantic import BaseModel
 
 
@@ -48,10 +46,10 @@ class CriticFeedback(BaseModel):
     will use to evaluate and provide insights on the synthesizer agent's answer.
     """
 
-    issues: List[str]
+    issues: list[str]
     """A list of identified issues found."""
 
-    suggestions: List[str]
+    suggestions: list[str]
     """A list of suggestions for improvement."""
 
     scores: CriticScore
