@@ -1,4 +1,7 @@
 # DRAFT (Deep Research Agent Framework Toolkit)
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 A multi-agent research framework that uses AI agents to plan, search, synthesize, and critique to produce high-quality research answers with live progress and observability.
 
@@ -210,3 +213,25 @@ Contributions are welcome. Please open an issue or pull request.
 ## Disclaimer
 
 This is an educational project for learning about AI agents and multi-agent systems. The name "DRAFT" stands for "Deep Research Agent Framework Toolkit".
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://limjk.ai"><img src="https://avatars.githubusercontent.com/u/10356193?v=4?s=100" width="100px;" alt="Jongkuk Lim"/><br /><sub><b>Jongkuk Lim</b></sub></a><br /><a href="https://github.com/JeiKeiLim/deep-research-agent-framework-toolkit/commits?author=JeiKeiLim" title="Code">💻</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
