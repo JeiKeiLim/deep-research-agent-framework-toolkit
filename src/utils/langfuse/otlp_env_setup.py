@@ -7,7 +7,7 @@ import os
 from ..env_vars import Configs
 
 
-def set_up_langfuse_otlp_env_vars():
+def set_up_langfuse_otlp_env_vars() -> None:
     """Set up environment variables for Langfuse OpenTelemetry integration.
 
     OTLP = OpenTelemetry Protocol.

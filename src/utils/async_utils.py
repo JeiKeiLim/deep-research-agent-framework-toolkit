@@ -2,7 +2,8 @@
 
 import asyncio
 import types
-from typing import Any, Awaitable, Callable, Coroutine, Sequence, TypeVar
+from collections.abc import Awaitable, Callable, Coroutine, Sequence
+from typing import Any, TypeVar
 
 from rich.progress import Progress
 
@@ -10,12 +11,12 @@ from rich.progress import Progress
 T = TypeVar("T")
 
 
-async def indexed(index: int, coro: Coroutine[None, None, T]) -> tuple[int, T]:
+async def indexed[T](index: int, coro: Coroutine[None, None, T]) -> tuple[int, T]:
     """Return (index, await coro)."""
     return index, (await coro)
 
 
-async def rate_limited(
+async def rate_limited[T](
     _fn: Callable[[], Awaitable[T]], semaphore: asyncio.Semaphore
 ) -> T:
     """Run _fn with semaphore rate limit."""
@@ -41,7 +42,7 @@ async def gather_with_progress(
         for index, coro in enumerate(coros)
     ]
 
-    # Pre‐allocate a results list; we'll fill in each slot as its Task completes
+    # Pre-allocate a results list; we'll fill in each slot as its Task completes
     results: list[T | None] = [None] * len(tasks)
 
     # Create and start a Progress bar with a total equal to the number of tasks
@@ -54,6 +55,6 @@ async def gather_with_progress(
             results[index] = result
             progress.update(progress_task, advance=1)
 
-    # At this point, every slot in `results` is guaranteed to be non‐None
+    # At this point, every slot in `results` is guaranteed to be non-None
     # so we can safely cast it back to List[T]
     return results  # type: ignore

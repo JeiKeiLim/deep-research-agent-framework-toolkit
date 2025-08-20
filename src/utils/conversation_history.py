@@ -9,13 +9,12 @@ Author: Rijoo Kim
 Contact: gureme1121@gmail.com
 """
 
-from __future__ import annotations
-
 import json
+from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -44,7 +43,7 @@ class Message(BaseModel):
     role: MessageRole
     content: str
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("content")
     @classmethod
@@ -62,10 +61,10 @@ class Conversation(BaseModel):
 
     id: str
     title: str
-    messages: List[Message] = Field(default_factory=list)
+    messages: list[Message] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator("title")
     @classmethod
@@ -77,9 +76,9 @@ class Conversation(BaseModel):
 
     def add_message(
         self,
-        role: Union[MessageRole, str],
+        role: MessageRole | str,
         content: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Add a new message to the conversation."""
         if isinstance(role, str):
@@ -99,7 +98,7 @@ class Conversation(BaseModel):
     def get_context_summary(
         self,
         max_messages: int = 5,
-        max_chars: Optional[int] = None,
+        max_chars: int | None = None,
         ellipsis: str = "...",
     ) -> str:
         """Get a summary of recent conversation context for agent reference."""
@@ -107,7 +106,7 @@ class Conversation(BaseModel):
             return "No previous conversation context."
 
         recent = self.messages[-max_messages:]
-        lines: List[str] = []
+        lines: list[str] = []
         for msg in recent:
             role_emoji = "👤" if msg.role == MessageRole.USER else "🤖"
             text = msg.content
@@ -124,7 +123,7 @@ class Conversation(BaseModel):
 class ConversationHistory:
     """Manages conversation history storage and retrieval."""
 
-    def __init__(self, storage_dir: str = "conversation_history"):
+    def __init__(self, storage_dir: str = "conversation_history") -> None:
         """Initialize conversation history manager.
 
         Args:
@@ -132,14 +131,14 @@ class ConversationHistory:
         """
         self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(exist_ok=True)
-        self.conversations: Dict[str, Conversation] = {}
+        self.conversations: dict[str, Conversation] = {}
         self._load_conversations()
 
     def _load_conversations(self) -> None:
         """Load existing conversations from storage (legacy-safe)."""
         for file_path in self.storage_dir.glob("*.json"):
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     raw = f.read()
                 # 레거시 JSON도 받아들이도록 model_validate_json 사용
                 conv = Conversation.model_validate_json(raw)
@@ -163,7 +162,7 @@ class ConversationHistory:
             print(f"Error saving conversation to {file_path}: {e}")
 
     def create_conversation(
-        self, title: str, initial_message: Optional[str] = None
+        self, title: str, initial_message: str | None = None
     ) -> str:
         """Create a new conversation.
 
@@ -200,9 +199,9 @@ class ConversationHistory:
     def add_message(
         self,
         conversation_id: str,
-        role: Union[MessageRole, str],
+        role: MessageRole | str,
         content: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Add a message to an existing conversation.
 
@@ -218,7 +217,7 @@ class ConversationHistory:
         self._save_conversation(conv)
         return True
 
-    def get_conversation(self, conversation_id: str) -> Optional[Conversation]:
+    def get_conversation(self, conversation_id: str) -> Conversation | None:
         """Get a conversation by ID."""
         return self.conversations.get(conversation_id)
 
@@ -232,16 +231,16 @@ class ConversationHistory:
         self._save_conversation(conv)
         return True
 
-    def get_all_conversations(self) -> List[Conversation]:
+    def get_all_conversations(self) -> list[Conversation]:
         """Get all conversations."""
         return list(self.conversations.values())
 
     def search_conversations(
         self, query: str, max_results: int = 10
-    ) -> List[Conversation]:
+    ) -> list[Conversation]:
         """Search conversations by content."""
         q = query.lower()
-        matched: List[Conversation] = []
+        matched: list[Conversation] = []
         for conv in self.conversations.values():
             if q in conv.title.lower() or q in conv.get_searchable_content().lower():
                 matched.append(conv)
@@ -284,11 +283,11 @@ class ConversationManager:
     - Providing enhanced queries with conversation context
     """
 
-    def __init__(self, history: ConversationHistory, max_messages: int = 5):
+    def __init__(self, history: ConversationHistory, max_messages: int = 5) -> None:
         self.history = history
         self.max_messages = max_messages
-        self.current_conversation_id: Optional[str] = None
-        self.title_update_callbacks: List[Callable[[str, str], None]] = []
+        self.current_conversation_id: str | None = None
+        self.title_update_callbacks: list[Callable[[str, str], None]] = []
 
     def add_title_update_callback(self, callback: Callable[[str, str], None]) -> None:
         """Add a callback function to be called when conversation title is updated."""
@@ -301,7 +300,7 @@ class ConversationManager:
         if callback in self.title_update_callbacks:
             self.title_update_callbacks.remove(callback)
 
-    def start_new_conversation(self, title: Optional[str] = None) -> str:
+    def start_new_conversation(self, title: str | None = None) -> str:
         """Start a new conversation with optional title."""
         if title is None:
             title = f"Conversation {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}"
@@ -347,7 +346,7 @@ class ConversationManager:
         return query
 
     def add_assistant_message(
-        self, content: str, metadata: Optional[Dict[str, Any]] = None
+        self, content: str, metadata: dict[str, Any] | None = None
     ) -> bool:
         """Add an assistant message to the current conversation."""
         if not self.current_conversation_id:
@@ -356,7 +355,7 @@ class ConversationManager:
             self.current_conversation_id, MessageRole.ASSISTANT, content, metadata
         )
 
-    def get_conversation_context(self, max_messages: Optional[int] = None) -> str:
+    def get_conversation_context(self, max_messages: int | None = None) -> str:
         """Get conversation context for the current conversation."""
         if not self.current_conversation_id:
             return "No conversation context available."
@@ -366,11 +365,11 @@ class ConversationManager:
             self.current_conversation_id, max_messages
         )
 
-    def search_history(self, query: str, max_results: int = 10) -> List[Conversation]:
+    def search_history(self, query: str, max_results: int = 10) -> list[Conversation]:
         """Search conversations in history."""
         return self.history.search_conversations(query, max_results)
 
-    def get_all_conversations(self) -> List[Conversation]:
+    def get_all_conversations(self) -> list[Conversation]:
         """Get all conversations from history."""
         return self.history.get_all_conversations()
 
@@ -381,11 +380,11 @@ class ConversationManager:
             return True
         return False
 
-    def get_conversation(self, conversation_id: str) -> Optional[Conversation]:
+    def get_conversation(self, conversation_id: str) -> Conversation | None:
         """Get a specific conversation by ID."""
         return self.history.get_conversation(conversation_id)
 
-    def get_current_conversation_id(self) -> Optional[str]:
+    def get_current_conversation_id(self) -> str | None:
         """Get the current conversation ID."""
         return self.current_conversation_id
 
@@ -393,7 +392,7 @@ class ConversationManager:
         """Check if there is an active conversation."""
         return self.current_conversation_id is not None
 
-    def get_conversation_title(self) -> Optional[str]:
+    def get_conversation_title(self) -> str | None:
         """Get the title of the current conversation."""
         if not self.current_conversation_id:
             return None

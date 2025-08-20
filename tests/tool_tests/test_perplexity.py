@@ -1,13 +1,15 @@
 """Test cases for Perplexity API integration."""
 
 import asyncio
+from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
 
-from src.draft_agents.function_tools import (
+from src.draft_agents.function_tools.perplexity_api import (
     AsyncPerplexitySearch,
+    PerplexitySearchResult,
     get_perplexity_async_client,
 )
 from src.utils import (
@@ -20,13 +22,15 @@ load_dotenv(verbose=True)
 
 
 @pytest.fixture()
-def configs():
+def configs() -> Configs:
     """Load env var configs for testing."""
     return Configs.from_env_var()
 
 
 @pytest_asyncio.fixture()
-async def perplexity_search(configs):
+async def perplexity_search(
+    configs: Configs,
+) -> AsyncGenerator[AsyncPerplexitySearch, None]:
     """Perplexity search client for testing."""
     async_client = get_perplexity_async_client(
         api_key=configs.perplexity_api_key,
@@ -40,7 +44,7 @@ async def perplexity_search(configs):
     await async_client.aclose()
 
 
-def test_perplexity_client_creation(configs):
+def test_perplexity_client_creation(configs: Configs) -> None:
     """Test Perplexity client creation."""
     client = get_perplexity_async_client(
         api_key=configs.perplexity_api_key,
@@ -50,7 +54,9 @@ def test_perplexity_client_creation(configs):
 
 
 @pytest.mark.asyncio
-async def test_perplexity_search_basic(perplexity_search: AsyncPerplexitySearch):
+async def test_perplexity_search_basic(
+    perplexity_search: AsyncPerplexitySearch,
+) -> None:
     """Test basic Perplexity search functionality."""
     query = "What is the latest news about artificial intelligence?"
     result = await perplexity_search.search(query)
@@ -71,7 +77,7 @@ async def test_perplexity_search_basic(perplexity_search: AsyncPerplexitySearch)
 @pytest.mark.asyncio
 async def test_perplexity_search_technical_query(
     perplexity_search: AsyncPerplexitySearch,
-):
+) -> None:
     """Test Perplexity search with technical query."""
     query = "What are the latest developments in quantum computing research?"
     result = await perplexity_search.search(query)
@@ -88,7 +94,7 @@ async def test_perplexity_search_technical_query(
 @pytest.mark.asyncio
 async def test_perplexity_search_current_events(
     perplexity_search: AsyncPerplexitySearch,
-):
+) -> None:
     """Test Perplexity search with current events query."""
     query = "What are the major technology trends in 2024?"
     result = await perplexity_search.search(query)
@@ -105,14 +111,14 @@ async def test_perplexity_search_current_events(
 @pytest.mark.asyncio
 async def test_perplexity_search_error_handling(
     perplexity_search: AsyncPerplexitySearch,
-):
+) -> None:
     """Test Perplexity search error handling with empty query."""
     with pytest.raises(ValueError, match="Query cannot be empty"):
         await perplexity_search.search("")
 
 
 @pytest.mark.asyncio
-async def test_perplexity_search_model_configuration():
+async def test_perplexity_search_model_configuration() -> None:
     """Test Perplexity search with different model configurations."""
     configs = Configs.from_env_var()
     async_client = get_perplexity_async_client(
@@ -137,7 +143,7 @@ async def test_perplexity_search_model_configuration():
 @pytest.mark.asyncio
 async def test_perplexity_search_concurrent_requests(
     perplexity_search: AsyncPerplexitySearch,
-):
+) -> None:
     """Test Perplexity search with concurrent requests."""
     queries = [
         "What is Python programming?",
@@ -145,7 +151,7 @@ async def test_perplexity_search_concurrent_requests(
         "What is machine learning?",
     ]
 
-    async def search_single(query: str):
+    async def search_single(query: str) -> PerplexitySearchResult:
         return await perplexity_search.search(query)
 
     # Run concurrent searches
@@ -165,7 +171,7 @@ async def test_perplexity_search_concurrent_requests(
 @pytest.mark.asyncio
 async def test_perplexity_search_url_extraction(
     perplexity_search: AsyncPerplexitySearch,
-):
+) -> None:
     """Test URL extraction from Perplexity search results."""
     query = "What will be the best programming languages to learn in 2026?"
     result = await perplexity_search.search(query)
@@ -188,7 +194,7 @@ async def test_perplexity_search_url_extraction(
 if __name__ == "__main__":
     configs2 = Configs.from_env_var()
 
-    async def run_tests():
+    async def run_tests() -> None:
         """Run sample test."""
         async_client = get_perplexity_async_client(
             api_key=configs2.perplexity_api_key,

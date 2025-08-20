@@ -1,5 +1,7 @@
 """Test cases for Weaviate integration."""
 
+from collections.abc import AsyncGenerator
+
 import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
@@ -18,13 +20,15 @@ load_dotenv(verbose=True)
 
 
 @pytest.fixture()
-def configs():
+def configs() -> Configs:
     """Load env var configs for testing."""
     return Configs.from_env_var()
 
 
 @pytest_asyncio.fixture()
-async def weaviate_kb(configs):
+async def weaviate_kb(
+    configs: Configs,
+) -> AsyncGenerator[AsyncWeaviateKnowledgeBase, None]:
     """Weaviate knowledgebase for testing."""
     async_client = get_weaviate_async_client(
         http_host=configs.weaviate_http_host,
@@ -44,7 +48,7 @@ async def weaviate_kb(configs):
 
 
 @pytest.mark.asyncio
-async def test_weaviate_kb(weaviate_kb: AsyncWeaviateKnowledgeBase):
+async def test_weaviate_kb(weaviate_kb: AsyncWeaviateKnowledgeBase) -> None:
     """Test weaviate knowledgebase integration."""
     responses = await weaviate_kb.search_knowledgebase("What is Toronto known for?")
     assert len(responses) > 0

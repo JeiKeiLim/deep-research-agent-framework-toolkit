@@ -10,7 +10,8 @@ Contact: lim.jeikei@gmail.com
 
 import asyncio
 import os
-from typing import Callable, List, Literal, Tuple
+from collections.abc import Callable
+from typing import Literal
 
 import agents
 from agents.mcp import MCPServer, MCPServerStdio
@@ -34,7 +35,7 @@ from src.utils.langfuse.shared_client import langfuse_client
 def agent_config_to_agent(
     config: DictConfig,
     openai_client: AsyncOpenAI,
-) -> Tuple[agents.Agent, List[MCPServer]]:
+) -> tuple[agents.Agent, list[MCPServer]]:
     """Convert a DictConfig to an Agent instance.
 
     This function takes a configuration dictionary and converts it into
@@ -54,7 +55,7 @@ def agent_config_to_agent(
         prompt = config.configs.prompt
 
     if os.path.exists(prompt):
-        with open(prompt, "r") as file:
+        with open(prompt) as file:
             prompt = file.read()
 
     if "prompt_args" in config.configs:
@@ -67,12 +68,12 @@ def agent_config_to_agent(
 
     tools = []
     if "function_tools" in config.configs:
-        tools: List[agents.Tool] = [
+        tools: list[agents.Tool] = [
             agents.function_tool(function_tools[tool_name], name_override=tool_name)
             for tool_name in config.configs.function_tools
         ]
 
-    sub_mcp_servers: List[MCPServer] = []
+    sub_mcp_servers: list[MCPServer] = []
     if "sub_agents" in config:
         for sub_agent_name, sub_agent_config in config.sub_agents.items():
             sub_agent, sub_sub_mcp_servers = agent_config_to_agent(
@@ -92,7 +93,7 @@ def agent_config_to_agent(
         # TODO: Find a way to limit the number of parallel tool calls
         model_settings.parallel_tool_calls = False
 
-    mcp_servers: List[MCPServerStdio] = []
+    mcp_servers: list[MCPServerStdio] = []
     if "mcp_servers" in config.configs:
         for mcp_server_name, mcp_server_config in config.configs.mcp_servers.items():
             if (
@@ -163,7 +164,7 @@ class DeepResearchAgent:
         """
         self.orchestration_mode = orchestration_mode
         self._async_openai_client = AsyncOpenAI()
-        self._mcp_servers: List[MCPServer] = []
+        self._mcp_servers: list[MCPServer] = []
         self.agents: dict[str, agents.Agent] = {}
 
         for key, value in agents_config.items():
@@ -234,7 +235,7 @@ class DeepResearchAgent:
 
     async def _run_search(
         self, search_plan: SearchPlan, revision_header_str: str
-    ) -> List[str]:
+    ) -> list[str]:
         with langfuse_client.start_as_current_span(
             name="DeepResearchAgentFrameworkToolkit._run_search", input=search_plan
         ) as search_span:
@@ -273,7 +274,7 @@ class DeepResearchAgent:
                         )
                     except Exception as e:
                         print(
-                            f"Error during search for '{search_item.search_term}': {str(e)}"
+                            f"Error during search for '{search_item.search_term}': {e!s}"
                         )
                         return search_item, None
                     return search_item, response
@@ -308,7 +309,7 @@ class DeepResearchAgent:
 
             return local_search_results
 
-    async def query(self, query: str) -> RunResult | RunResultStreaming:  # noqa: PLR0912
+    async def query(self, query: str) -> RunResult | RunResultStreaming:
         """Process a query using the configured agents.
 
         This method runs asynchronously and processes the provided query
@@ -393,7 +394,7 @@ class DeepResearchAgent:
                 agent_span.update(output=response_stream.final_output_as(str))
                 return response_stream
             except Exception as e:
-                error_message = f"The agent encountered an unrecoverable error: {str(e)}\nThis can happen if the agent tries to call a sub-agent that does not exist or with incorrect parameters. The operation will now stop."
+                error_message = f"The agent encountered an unrecoverable error: {e!s}\nThis can happen if the agent tries to call a sub-agent that does not exist or with incorrect parameters. The operation will now stop."
                 self._notify_progress(1.0, error_message)
                 assert response_stream is not None, (
                     "Response stream should not be None if an exception occurs."
@@ -523,7 +524,7 @@ class DeepResearchAgent:
                         )
                         critic_feedback = critic_response.final_output_as(
                             CriticFeedback
-                        )  # noqa
+                        )
                         critic_span.update(output=critic_feedback)
 
                     self._notify_progress(

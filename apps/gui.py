@@ -8,7 +8,7 @@ Contact: lim.jeikei@gmail.com
 """
 
 import asyncio
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import gradio as gr
 import hydra
@@ -94,7 +94,7 @@ class DeepResearchAgentGUI:
     def _get_default_title(self) -> str:
         return "New chat"
 
-    def _create_chat_messages(self, conversation) -> list[ChatMessage]:
+    def _create_chat_messages(self, conversation: Conversation) -> list[ChatMessage]:
         return [
             ChatMessage(
                 role=("user" if m.role == "user" else "assistant"), content=m.content
@@ -102,7 +102,9 @@ class DeepResearchAgentGUI:
             for m in conversation.messages
         ]
 
-    def _create_info_text(self, conversation, title_override: str = None) -> str:
+    def _create_info_text(
+        self, conversation: Conversation, title_override: str | None = None
+    ) -> str:
         title = title_override or conversation.title or self._get_default_title()
         return (
             f"**Current Chat:** {title}\n"
@@ -231,7 +233,7 @@ class DeepResearchAgentGUI:
                     ),
                 )
                 yield {self._chatbot: gr_messages}
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
 
         # Finalize
@@ -554,7 +556,9 @@ class DeepResearchAgentGUI:
         info = self._create_info_text(conv)
         return gr.update(value=chats), gr.update(value=""), gr.update(value=info)
 
-    def _update_current_conversation_info(self, conversation) -> None:
+    def _update_current_conversation_info(
+        self, conversation: Conversation | None
+    ) -> None:
         if hasattr(self, "_current_info") and conversation:
             info = self._create_info_text(conversation)
             self._current_info.value = info

@@ -1,7 +1,6 @@
 """Evaluate the agent's response using LLM-as-a-judge."""
 
 import asyncio
-from typing import Tuple
 
 import agents
 import hydra
@@ -80,7 +79,7 @@ async def run_evaluation_coroutine(
     evaluator_agent: Agent,
     lf_dataset_item: DatasetItemClient,
     run_name: str,
-) -> Tuple[LangFuseTracedResponse, EvaluatorFeedback | None]:
+) -> tuple[LangFuseTracedResponse, EvaluatorFeedback | None]:
     """Run the evaluation coroutine."""
     ground_truth = lf_dataset_item.expected_output
     assert ground_truth is not None
@@ -138,7 +137,9 @@ def run_evaluation(cfg: DictConfig) -> None:
         )
     else:
 
-        async def run_sequential():
+        async def run_sequential() -> list[
+            tuple[LangFuseTracedResponse, EvaluatorFeedback | None] | None
+        ]:
             """Run evaluation sequentially."""
             results = []
             for lf_dataset_item in track(
