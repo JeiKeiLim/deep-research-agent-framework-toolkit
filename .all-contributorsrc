@@ -15,7 +15,16 @@
       "contributions": [
         "code"
       ]
-    }
+    },
+    {
+      "login": "RijuKim",
+      "name": "Rijoo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/93368654?v=4",
+      "profile": "https://github.com/RijuKim",
+      "contributions": [
+        "code"
+      ]
+    },
   ],
   "contributorsPerLine": 7,
   "skipCi": true,

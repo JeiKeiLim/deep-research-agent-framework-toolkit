@@ -241,6 +241,7 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tbody>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://limjk.ai"><img src="https://avatars.githubusercontent.com/u/10356193?v=4?s=100" width="100px;" alt="Jongkuk Lim"/><br /><sub><b>Jongkuk Lim</b></sub></a><br /><a href="https://github.com/JeiKeiLim/deep-research-agent-framework-toolkit/commits?author=JeiKeiLim" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/RijuKim"><img src="https://avatars.githubusercontent.com/u/93368654?v=4?s=100" width="100px;" alt="Rijoo"/><br /><sub><b>Rijoo</b></sub></a><br /><a href="https://github.com/JeiKeiLim/deep-research-agent-framework-toolkit/commits?author=RijuKim" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
