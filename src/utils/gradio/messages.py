@@ -1,10 +1,9 @@
 """Tools for integrating with the Gradio chatbot UI."""
 
-from typing import TYPE_CHECKING
-
 from agents import StreamEvent, stream_events
 from agents.items import MessageOutputItem, RunItem, ToolCallItem, ToolCallOutputItem
 from gradio.components.chatbot import ChatMessage
+from openai.types.chat import ChatCompletionMessageParam
 from openai.types.responses import (
     ResponseCompletedEvent,
     ResponseFunctionToolCall,
@@ -15,15 +14,11 @@ from openai.types.responses import (
 from ..pretty_printing import pretty_print
 
 
-if TYPE_CHECKING:
-    from openai.types.chat import ChatCompletionMessageParam
-
-
 def gradio_messages_to_oai_chat(
     messages: list[ChatMessage | dict],
-) -> list["ChatCompletionMessageParam"]:
+) -> list[ChatCompletionMessageParam]:
     """Translate Gradio chat message history to OpenAI format."""
-    output: list["ChatCompletionMessageParam"] = []
+    output: list[ChatCompletionMessageParam] = []
     for message in messages:
         if isinstance(message, dict):
             output.append(message)  # type: ignore[arg-type]

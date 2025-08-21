@@ -1,4 +1,7 @@
 # DRAFT (Deep Research Agent Framework Toolkit)
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-2-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 A multi-agent research framework that uses AI agents to plan, search, synthesize, and critique to produce high-quality research answers with live progress and observability.
 
@@ -39,6 +42,7 @@ DRAFT demonstrates how to build a sophisticated, composable AI agent system for 
 - **Structured outputs**: Pydantic models; safe type conversions
 - **Async-ready**: Concurrent tool calls with rate limiting
 - **Tracing**: Langfuse traces linked to evaluations
+- **Conversation History**: Persistent storage and retrieval of past conversations for context-aware research
 
 ## Installation
 
@@ -50,14 +54,16 @@ DRAFT demonstrates how to build a sophisticated, composable AI agent system for 
 
 ### Setup
 
-1) Clone and install:
+1. Clone and install:
+
 ```bash
 git clone https://github.com/JeiKeiLim/deep-research-agent-framework-toolkit.git
 cd deep-research-agent-framework-toolkit
 uv sync
 ```
 
-2) Configure environment variables by copying `.env.example`:
+2. Configure environment variables by copying `.env.example`:
+
 ```bash
 cp .env.example .env
 # Fill in values in .env
@@ -84,10 +90,12 @@ Set the following environment variables (see `.env.example`):
 - **Perplexity**: `PERPLEXITY_API_KEY`
 - **Tavily**: `TAVILY_API_KEY`
 
-Hydra config lives in `configs/config.yaml` and composes agent configs from `configs/agents/*.yaml`. Two notable toggles:
+Hydra config lives in `configs/config.yaml` and composes agent configs from `configs/agents/*.yaml`. Notable toggles:
 
 - `agent_configs.max_revision`: number of sequential-mode revisions (default: 3)
 - `agent_configs.orchestration_mode`: `agent` or `sequential`
+- `agent_configs.enable_history`: enable conversation history (default: true)
+- `agent_configs.history_storage_dir`: directory for storing conversation files (default: "conversation_history")
 
 You can also override Hydra values via CLI flags if desired.
 
@@ -98,7 +106,17 @@ You can also override Hydra values via CLI flags if desired.
 ```bash
 PYTHONPATH=. uv run --env-file .env apps/gui.py
 ```
+
 Visit `http://localhost:7860`.
+
+### Conversation History Features
+
+The GUI now includes conversation history management:
+
+- **New Conversation**: Start a fresh research session
+- **Conversation Selection**: Switch between different conversation threads
+- **History Search**: Search through past conversations by content
+- **Context Awareness**: Agents can reference previous conversations for better continuity
 
 ### Switch orchestration mode
 
@@ -120,6 +138,7 @@ Requirements:
 
 - Node.js + `npx` for `mcp-remote`
 - Install the ArXiv MCP server (optional pre-install to avoid on-demand install):
+
 ```bash
 uv tool install arxiv-mcp-server
 ```
@@ -143,7 +162,7 @@ deep-research-agent-framework-toolkit/
 │   ├── draft_agents/
 │   │   ├── agent.py                # Agent orchestration + MCP wiring
 │   │   └── function_tools/         # Tooling: Weaviate, Perplexity, Tavily
-│   └── utils/                      # Env, tracing, gradio helpers, etc.
+│   └── utils/                      # Env, tracing, gradio helpers, conversation history, etc.
 ├── tests/                          # Unit/integration tests
 └── pyproject.toml                  # Dependencies and tooling config
 ```
@@ -210,3 +229,26 @@ Contributions are welcome. Please open an issue or pull request.
 ## Disclaimer
 
 This is an educational project for learning about AI agents and multi-agent systems. The name "DRAFT" stands for "Deep Research Agent Framework Toolkit".
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://limjk.ai"><img src="https://avatars.githubusercontent.com/u/10356193?v=4?s=100" width="100px;" alt="Jongkuk Lim"/><br /><sub><b>Jongkuk Lim</b></sub></a><br /><a href="https://github.com/JeiKeiLim/deep-research-agent-framework-toolkit/commits?author=JeiKeiLim" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/RijuKim"><img src="https://avatars.githubusercontent.com/u/93368654?v=4?s=100" width="100px;" alt="Rijoo"/><br /><sub><b>Rijoo</b></sub></a><br /><a href="https://github.com/JeiKeiLim/deep-research-agent-framework-toolkit/commits?author=RijuKim" title="Code">💻</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!

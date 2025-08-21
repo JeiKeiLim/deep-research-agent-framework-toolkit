@@ -1,5 +1,7 @@
 """Shared toolings for reference implementations."""
 
+# Import conversation history module
+from . import conversation_history
 from .async_utils import gather_with_progress, rate_limited
 from .env_vars import Configs
 from .gradio.messages import (

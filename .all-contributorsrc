@@ -1,0 +1,35 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "commitType": "docs",
+  "commitConvention": "angular",
+  "contributors": [
+    {
+      "login": "JeiKeiLim",
+      "name": "Jongkuk Lim",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10356193?v=4",
+      "profile": "https://limjk.ai",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "RijuKim",
+      "name": "Rijoo",
+      "avatar_url": "https://avatars.githubusercontent.com/u/93368654?v=4",
+      "profile": "https://github.com/RijuKim",
+      "contributions": [
+        "code"
+      ]
+    },
+  ],
+  "contributorsPerLine": 7,
+  "skipCi": true,
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "projectName": "deep-research-agent-framework-toolkit",
+  "projectOwner": "JeiKeiLim"
+}

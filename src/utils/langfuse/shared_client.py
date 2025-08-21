@@ -18,7 +18,7 @@ langfuse_client = Langfuse(
 )
 
 
-def flush_langfuse(client: "Langfuse | None" = None):
+def flush_langfuse(client: "Langfuse | None" = None) -> None:
     """Flush shared LangFuse Client. Rich Progress included."""
     if client is None:
         client = langfuse_client
