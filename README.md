@@ -109,6 +109,38 @@ PYTHONPATH=. uv run --env-file .env apps/gui.py
 
 Visit `http://localhost:7860`.
 
+### Run the CLI
+
+The Deep Research Agent can also be interacted with via a command-line interface.
+
+#### Interactive Mode
+
+To start an interactive chat session:
+
+```bash
+PYTHONPATH=. uv run --env-file .env apps/cli.py
+```
+
+Type your query and press Enter. Type `exit` or `quit` to end the session.
+
+#### One-Time Query Mode
+
+To run a single query and get the answer directly, use the `+query` argument:
+
+```bash
+PYTHONPATH=. uv run --env-file .env apps/cli.py +query="Your research question here""
+```
+
+**Note:** The `+` prefix before `query` is important. It tells Hydra (the configuration manager) to add `query` to the configuration, as it's not defined in the default configuration files.
+
+#### Overriding Configurations
+
+You can override any configuration parameter defined in the `configs/` directory directly from the command line. For example, to enable conversation history:
+
+```bash
+PYTHONPATH=. uv run --env-file .env apps/cli.py +query="Your question" agent_configs.enable_history=true
+```
+
 ### Conversation History Features
 
 The GUI now includes conversation history management:
@@ -189,6 +221,7 @@ PYTHONPATH=. uv run --env-file .env evals/run_evaluation.py
 - **Lint**: `uv run ruff check .`
 - **Test**: `PYTHONPATH=. uv run --env-file .env pytest`
 - **Pre-commit**: `uv run pre-commit run --all-files`
+  - **Install pre-commit hooks**: `uv run pre-commit install`
 
 ### Adding new agents
 
