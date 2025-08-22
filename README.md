@@ -221,6 +221,7 @@ PYTHONPATH=. uv run --env-file .env evals/run_evaluation.py
 - **Lint**: `uv run ruff check .`
 - **Test**: `PYTHONPATH=. uv run --env-file .env pytest`
 - **Pre-commit**: `uv run pre-commit run --all-files`
+  - **Install pre-commit hooks**: `uv run pre-commit install`
 
 ### Adding new agents
 
