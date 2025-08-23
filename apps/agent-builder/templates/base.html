@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Agent Builder - DRAFT Framework{% endblock %}</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom CSS -->
+    <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .header-gradient {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 2px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-2px);
+        }
+
+        .badge {
+            background: rgba(59, 130, 246, 0.1);
+            color: #1d4ed8;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .badge-model {
+            background: rgba(16, 185, 129, 0.1);
+            color: #047857;
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .badge-tool {
+            background: rgba(245, 158, 11, 0.1);
+            color: #d97706;
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        .badge-mcp {
+            background: rgba(139, 92, 246, 0.1);
+            color: #7c3aed;
+            border-color: rgba(139, 92, 246, 0.2);
+        }
+
+        .sub-agent-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .sub-agent-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        .form-input {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+            background: white;
+            transform: translateY(-1px);
+        }
+
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            border-bottom: 3px solid #4ade80;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+    </style>
+
+    {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="header-gradient text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-black opacity-10"></div>
+        <div class="relative z-10 container mx-auto px-6 py-12 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4 text-shadow-lg">🤖 Agent Builder</h1>
+            <p class="text-xl text-gray-200">Create and manage multi-agent configurations for the DRAFT research framework</p>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="glass border-b border-white/20">
+        <div class="container mx-auto px-6">
+            <div class="flex space-x-1">
+                <a href="{{ url_for('browse_agents') }}" class="nav-link px-6 py-4 text-gray-700 hover:text-gray-900 font-medium {% if request.endpoint == 'browse_agents' %}active{% endif %}">
+                    Browse Agents
+                </a>
+                <a href="{{ url_for('create_agent') }}" class="nav-link px-6 py-4 text-gray-700 hover:text-gray-900 font-medium {% if request.endpoint == 'create_agent' %}active{% endif %}">
+                    Create Agent
+                </a>
+                <a href="{{ url_for('edit_agent') }}" class="nav-link px-6 py-4 text-gray-700 hover:text-gray-900 font-medium {% if request.endpoint == 'edit_agent' %}active{% endif %}">
+                    Edit Agent
+                </a>
+                <a href="{{ url_for('delete_agent') }}" class="nav-link px-6 py-4 text-gray-700 hover:text-gray-900 font-medium {% if request.endpoint == 'delete_agent' %}active{% endif %}">
+                    Delete Agent
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="glass border-t border-white/20 mt-12">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <p class="text-gray-600">Built with ❤️ for the DRAFT Framework</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script>
+        // Global utility functions
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-md ${type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'} text-white`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        function showLoading(element) {
+            element.disabled = true;
+            element.innerHTML = '<svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Loading...';
+        }
+
+        function hideLoading(element, originalText) {
+            element.disabled = false;
+            element.textContent = originalText;
+        }
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

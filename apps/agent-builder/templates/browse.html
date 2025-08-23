@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Browse Agents - Agent Builder{% endblock %}
+
+{% block content %}
+<div class="fade-in-up">
+    <div class="mb-8">
+                    <div>
+                <h2 class="text-3xl font-bold text-gray-900 mb-2">Agent Library</h2>
+                <p class="text-gray-600">Browse and inspect existing agent configurations</p>
+            </div>
+    </div>
+
+    {% if agents %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {% for agent in agents %}
+            <div class="glass-card rounded-xl p-6 cursor-pointer hover:shadow-lg transition-all duration-300"
+                 onclick="loadAgentDetails('{{ agent.name }}')">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-gray-900">{{ agent.display_name }}</h3>
+                    <span class="text-sm text-gray-500">{{ agent.name }}</span>
+                </div>
+                <div class="text-gray-600">
+                    <p class="text-sm">Click to view details</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="glass-card rounded-xl p-12 text-center">
+            <div class="text-gray-400 mb-4">
+                <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No agents found</h3>
+            <p class="text-gray-600 mb-4">Create your first agent to get started</p>
+            <a href="{{ url_for('create_agent') }}" class="btn-primary text-white px-6 py-2 rounded-lg font-medium">
+                Create Agent
+            </a>
+        </div>
+    {% endif %}
+
+    <!-- Agent Details Modal -->
+    <div id="agentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-card rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-2xl font-bold text-gray-900" id="modalTitle">Agent Details</h3>
+                        <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div id="modalContent">
+                        <!-- Content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function loadAgentDetails(agentName) {
+        // Use the same test data structure that works
+        const testAgent = {
+            name: agentName,
+            display_name: agentName,
+            description: 'Loading agent details...',
+            model: 'Loading...',
+            function_tools: [],
+            mcp_servers: [],
+            main_prompt: 'Loading...',
+            sub_agents: []
+        };
+
+        // Show modal immediately with loading data
+        displayAgentDetails(testAgent);
+
+        // Then fetch real data
+        axios.get(`/api/agents/${agentName}`)
+            .then(response => {
+                const agent = response.data;
+                displayAgentDetails(agent);
+            })
+            .catch(error => {
+                console.error('Error loading agent details:', error);
+                showNotification('Error loading agent details', 'error');
+            });
+    }
+
+    function displayAgentDetails(agent) {
+        const modal = document.getElementById('agentModal');
+        const title = document.getElementById('modalTitle');
+        const content = document.getElementById('modalContent');
+
+        if (!modal || !title || !content) {
+            console.error('Modal elements not found');
+            return;
+        }
+
+        title.textContent = agent.display_name || agent.name;
+
+        let subAgentsHtml = '';
+        if (agent.sub_agents && agent.sub_agents.length > 0) {
+            subAgentsHtml = `
+                <div class="mt-8">
+                    <h4 class="text-xl font-semibold text-gray-900 mb-4">Sub-agents (${agent.sub_agents.length})</h4>
+                    <div class="space-y-4">
+                        ${agent.sub_agents.map(subAgent => generateSubAgentCard(subAgent)).join('')}
+                    </div>
+                </div>
+            `;
+        } else {
+            subAgentsHtml = `
+                <div class="mt-8">
+                    <h4 class="text-xl font-semibold text-gray-900 mb-4">Sub-agents</h4>
+                    <p class="text-gray-500 italic">No sub-agents configured</p>
+                </div>
+            `;
+        }
+
+        const contentHtml = `
+            <div class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Agent ID</label>
+                        <p class="text-gray-900 font-mono bg-gray-50 px-3 py-2 rounded">${agent.name}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                        <span class="badge badge-model px-3 py-1 rounded-full text-sm">${agent.model || 'N/A'}</span>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                    <p class="text-gray-900">${agent.description || 'No description'}</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Function Tools</label>
+                    <div class="flex flex-wrap gap-2">
+                        ${agent.function_tools && agent.function_tools.length > 0
+                            ? agent.function_tools.map(tool => `<span class="badge badge-tool px-3 py-1 rounded-full text-sm">${tool}</span>`).join('')
+                            : '<span class="text-gray-500 italic">No tools</span>'
+                        }
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">MCP Servers</label>
+                    <div class="flex flex-wrap gap-2">
+                        ${agent.mcp_servers && agent.mcp_servers.length > 0
+                            ? agent.mcp_servers.map(server => `<span class="badge badge-mcp px-3 py-1 rounded-full text-sm">${server}</span>`).join('')
+                            : '<span class="text-gray-500 italic">No MCP servers</span>'
+                        }
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Main Prompt</label>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <pre class="text-sm text-gray-900 whitespace-pre-wrap">${agent.main_prompt || 'No prompt'}</pre>
+                    </div>
+                </div>
+
+                ${subAgentsHtml}
+            </div>
+        `;
+
+        content.innerHTML = contentHtml;
+
+        // Force modal to be visible with all necessary styles
+        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+        modal.style.zIndex = '9999';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+    }
+
+    function generateSubAgentCard(subAgent) {
+        const cardId = 'sub-agent-' + Math.random().toString(36).substr(2, 9);
+        return `
+            <div class="sub-agent-card rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h5 class="text-lg font-semibold text-gray-900">${subAgent.name}</h5>
+                    <span class="badge badge-model px-2 py-1 rounded text-xs">${subAgent.model || 'N/A'}</span>
+                </div>
+                <p class="text-gray-600 text-sm mb-3">${subAgent.description || 'No description'}</p>
+                <div class="space-y-2">
+                    <div>
+                        <span class="text-xs font-medium text-gray-500">Tools:</span>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            ${subAgent.function_tools && subAgent.function_tools.length > 0
+                                ? subAgent.function_tools.map(tool => `<span class="badge badge-tool px-2 py-1 rounded text-xs">${tool}</span>`).join('')
+                                : '<span class="text-gray-400 text-xs italic">None</span>'
+                            }
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-xs font-medium text-gray-500">MCP Servers:</span>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            ${subAgent.mcp_servers && subAgent.mcp_servers.length > 0
+                                ? subAgent.mcp_servers.map(server => `<span class="badge badge-mcp px-2 py-1 rounded text-xs">${server}</span>`).join('')
+                                : '<span class="text-gray-400 text-xs italic">None</span>'
+                            }
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <button onclick="togglePrompt('${cardId}')"
+                                class="text-blue-600 hover:text-blue-800 text-xs font-medium flex items-center">
+                            <span id="${cardId}-toggle-text">Show Prompt</span>
+                            <svg id="${cardId}-icon" class="w-4 h-4 ml-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </button>
+                        <div id="${cardId}-prompt" class="hidden mt-2">
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <pre class="text-xs text-gray-900 whitespace-pre-wrap">${subAgent.prompt || 'No prompt'}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function closeModal() {
+        const modal = document.getElementById('agentModal');
+        modal.classList.add('hidden');
+        modal.style.display = 'none';
+        modal.style.position = '';
+        modal.style.top = '';
+        modal.style.left = '';
+        modal.style.width = '';
+        modal.style.height = '';
+        modal.style.backgroundColor = '';
+        modal.style.zIndex = '';
+        modal.style.alignItems = '';
+        modal.style.justifyContent = '';
+    }
+
+    function togglePrompt(cardId) {
+        const promptDiv = document.getElementById(cardId + '-prompt');
+        const toggleText = document.getElementById(cardId + '-toggle-text');
+        const icon = document.getElementById(cardId + '-icon');
+
+        if (promptDiv.classList.contains('hidden')) {
+            promptDiv.classList.remove('hidden');
+            toggleText.textContent = 'Hide Prompt';
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            promptDiv.classList.add('hidden');
+            toggleText.textContent = 'Show Prompt';
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('agentModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+</script>
+{% endblock %}
