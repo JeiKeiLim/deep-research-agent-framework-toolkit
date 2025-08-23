@@ -9,10 +9,10 @@
       
       
       
-        <link rel="prev" href="../agent-builder/">
+        <link rel="prev" href="../architecture/">
       
       
-        <link rel="next" href="../contributing/">
+        <link rel="next" href="../creating-agents/">
       
       
       <link rel="icon" href="../assets/draft_favicon.ico">
@@ -20,7 +20,7 @@
     
     
       
-        <title>Creating Your Own Agent - Deep Research Agent Framework Toolkit</title>
+        <title>Agent Builder - Deep Research Agent Framework Toolkit</title>
       
     
     
@@ -76,7 +76,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#creating-your-own-agent" class="md-skip">
+        <a href="#agent-builder-web-application" class="md-skip">
           Skip to content
         </a>
       
@@ -109,7 +109,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Creating Your Own Agent
+              Agent Builder
             
           </span>
         </div>
@@ -258,9 +258,11 @@
   
   
   
+    
   
-    <li class="md-tabs__item">
-      <a href="../agent-builder/" class="md-tabs__link">
+  
+    <li class="md-tabs__item md-tabs__item--active">
+      <a href="./" class="md-tabs__link">
         
   
   
@@ -277,11 +279,9 @@
   
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
-      <a href="./" class="md-tabs__link">
+    <li class="md-tabs__item">
+      <a href="../creating-agents/" class="md-tabs__link">
         
   
   
@@ -405,28 +405,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../agent-builder/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Agent Builder
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
@@ -444,7 +422,7 @@
   
   
   <span class="md-ellipsis">
-    Creating Your Own Agent
+    Agent Builder
     
   </span>
   
@@ -457,7 +435,7 @@
   
   
   <span class="md-ellipsis">
-    Creating Your Own Agent
+    Agent Builder
     
   </span>
   
@@ -480,55 +458,229 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#method-1-using-the-agent-builder-web-interface-recommended" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
-      Method 1: Using the Agent Builder Web Interface (Recommended)
+      Overview
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#method-2-manual-yaml-configuration" class="md-nav__link">
+  <a href="#getting-started" class="md-nav__link">
     <span class="md-ellipsis">
-      Method 2: Manual YAML Configuration
+      Getting Started
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Method 2: Manual YAML Configuration">
+    <nav class="md-nav" aria-label="Getting Started">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-create-a-configuration-file" class="md-nav__link">
+  <a href="#starting-the-agent-builder" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Create a Configuration File
+      Starting the Agent Builder
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-organize-prompt-files" class="md-nav__link">
+  <a href="#interface-overview" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Organize Prompt Files
+      Interface Overview
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating Agents
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating Agents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-basic-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Basic Information
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-define-an-output-type-optional" class="md-nav__link">
+  <a href="#step-2-main-prompt" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Define an Output Type (Optional)
+      Step 2: Main Prompt
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-activate-your-main-agent-configuration" class="md-nav__link">
+  <a href="#step-3-tools-and-capabilities" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Activate Your Main Agent Configuration
+      Step 3: Tools and Capabilities
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 3: Tools and Capabilities">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#function-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      Function Tools
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcp-servers" class="md-nav__link">
+    <span class="md-ellipsis">
+      MCP Servers
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-sub-agents-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Sub-Agents (Optional)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#managing-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Managing Agents
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Managing Agents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#browse-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Browse Agents
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edit-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edit Agents
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Delete Agents
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#real-time-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Real-time Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatic-file-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic File Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Structure
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agent-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Agent Design
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sub-agent-organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sub-Agent Organization
     </span>
   </a>
   
@@ -543,6 +695,28 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../creating-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Creating Your Own Agent
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -596,55 +770,229 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#method-1-using-the-agent-builder-web-interface-recommended" class="md-nav__link">
+  <a href="#overview" class="md-nav__link">
     <span class="md-ellipsis">
-      Method 1: Using the Agent Builder Web Interface (Recommended)
+      Overview
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#method-2-manual-yaml-configuration" class="md-nav__link">
+  <a href="#getting-started" class="md-nav__link">
     <span class="md-ellipsis">
-      Method 2: Manual YAML Configuration
+      Getting Started
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Method 2: Manual YAML Configuration">
+    <nav class="md-nav" aria-label="Getting Started">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-create-a-configuration-file" class="md-nav__link">
+  <a href="#starting-the-agent-builder" class="md-nav__link">
     <span class="md-ellipsis">
-      1. Create a Configuration File
+      Starting the Agent Builder
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#2-organize-prompt-files" class="md-nav__link">
+  <a href="#interface-overview" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Organize Prompt Files
+      Interface Overview
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#creating-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Creating Agents
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Creating Agents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#step-1-basic-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 1: Basic Information
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#3-define-an-output-type-optional" class="md-nav__link">
+  <a href="#step-2-main-prompt" class="md-nav__link">
     <span class="md-ellipsis">
-      3. Define an Output Type (Optional)
+      Step 2: Main Prompt
     </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#4-activate-your-main-agent-configuration" class="md-nav__link">
+  <a href="#step-3-tools-and-capabilities" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Activate Your Main Agent Configuration
+      Step 3: Tools and Capabilities
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Step 3: Tools and Capabilities">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#function-tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      Function Tools
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mcp-servers" class="md-nav__link">
+    <span class="md-ellipsis">
+      MCP Servers
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#step-4-sub-agents-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      Step 4: Sub-Agents (Optional)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#managing-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Managing Agents
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Managing Agents">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#browse-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Browse Agents
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#edit-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Edit Agents
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#delete-agents" class="md-nav__link">
+    <span class="md-ellipsis">
+      Delete Agents
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-features" class="md-nav__link">
+    <span class="md-ellipsis">
+      Advanced Features
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advanced Features">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#real-time-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Real-time Validation
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#automatic-file-management" class="md-nav__link">
+    <span class="md-ellipsis">
+      Automatic File Management
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configuration-structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      Configuration Structure
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Best Practices
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Best Practices">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#agent-design" class="md-nav__link">
+    <span class="md-ellipsis">
+      Agent Design
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sub-agent-organization" class="md-nav__link">
+    <span class="md-ellipsis">
+      Sub-Agent Organization
     </span>
   </a>
   
@@ -674,80 +1022,124 @@
   
 
 
-<h1 id="creating-your-own-agent">Creating Your Own Agent<a class="headerlink" href="#creating-your-own-agent" title="Permanent link">&para;</a></h1>
-<p>One of the key features of the DRAFT framework is the ability to easily create and integrate your own custom agents. This guide will walk you through the process of creating a new agent using either the Agent Builder web interface or manual YAML configuration.</p>
-<h2 id="method-1-using-the-agent-builder-web-interface-recommended">Method 1: Using the Agent Builder Web Interface (Recommended)<a class="headerlink" href="#method-1-using-the-agent-builder-web-interface-recommended" title="Permanent link">&para;</a></h2>
-<p>The easiest way to create custom agents is using the Agent Builder web application. Please refer to the <a href="../agent-builder/">Agent Builder</a> documentation for a complete guide on how to use the web interface to create and manage your agents.</p>
-<h2 id="method-2-manual-yaml-configuration">Method 2: Manual YAML Configuration<a class="headerlink" href="#method-2-manual-yaml-configuration" title="Permanent link">&para;</a></h2>
-<p>For advanced users who prefer manual configuration, you can create agents using YAML files directly.</p>
-<h3 id="1-create-a-configuration-file">1. Create a Configuration File<a class="headerlink" href="#1-create-a-configuration-file" title="Permanent link">&para;</a></h3>
-<p>The first step is to create a new YAML configuration file for your agent in the <code>configs/agents/{your_agent_name}</code> directory. For example, let's create a new agent called <code>my_agent</code>:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># configs/agents/my_agent/main.yaml</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nt">defaults</span><span class="p">:</span>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">../mcp_servers/tavily_search@configs.mcp_servers</span><span class="w">  </span><span class="c1"># Optional, specify the MCP server to use</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">_self_</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Main&quot;</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;This</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">my</span><span class="nv"> </span><span class="s">custom</span><span class="nv"> </span><span class="s">agent.&quot;</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nt">configs</span><span class="p">:</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;gemini-1.5-pro-latest&quot;</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span><span class="nt">prompt</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prompts/my_agent/main.txt</span><span class="w">  </span><span class="c1"># This can be both a file path or a string</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="nt">function_tools</span><span class="p">:</span><span class="w">  </span><span class="c1"># Optional. Function tools are defined at src/draft_agents/function_tools/__init__.py</span>
-</span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">perplexity_search</span>
+<h1 id="agent-builder-web-application">Agent Builder Web Application<a class="headerlink" href="#agent-builder-web-application" title="Permanent link">&para;</a></h1>
+<p>The Agent Builder is a modern, web-based interface for creating and managing custom agents in the DRAFT framework. It provides an intuitive way to design multi-agent systems without manually editing YAML configuration files.</p>
+<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
+<p>The Agent Builder is a Flask-based web application that offers a visual interface for agent creation and management. It features a modern, responsive design built with Tailwind CSS and provides real-time validation and feedback.</p>
+<h2 id="getting-started">Getting Started<a class="headerlink" href="#getting-started" title="Permanent link">&para;</a></h2>
+<h3 id="starting-the-agent-builder">Starting the Agent Builder<a class="headerlink" href="#starting-the-agent-builder" title="Permanent link">&para;</a></h3>
+<div class="language-bash highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nv">PYTHONPATH</span><span class="o">=</span>.<span class="w"> </span>uv<span class="w"> </span>run<span class="w"> </span>--env-file<span class="w"> </span>.env<span class="w"> </span>apps/agent-builder/app.py
 </span></code></pre></div>
-<p>In this configuration, you define the main agent's name, description, LLM settings and prompt file.
-You can also specify any sub-agents by adding additional configuration files in the same directory (e.g., <code>configs/agents/my_agent/my_sub_agent.yaml</code>).</p>
-<h3 id="2-organize-prompt-files">2. Organize Prompt Files<a class="headerlink" href="#2-organize-prompt-files" title="Permanent link">&para;</a></h3>
-<p>Next, create a new directory for your main agent's prompt files under <code>prompts/</code> (e.g., <code>prompts/my_agent/</code>). This directory will contain the prompt files for your main agent and any sub-agents within that configuration.</p>
-<p>For our example, we'll create <code>prompts/my_agent/main.txt</code>:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>You are the main orchestrator for the &#39;My Agent&#39; configuration. Your task is to...
-</span></code></pre></div>
-<p>This file contains the prompt that will be used to instruct your main agent on its task. Similarly, you would create prompt files for any sub-agents (e.g., <code>prompts/my_agent/my_sub_agent.txt</code>).</p>
-<h3 id="3-define-an-output-type-optional">3. Define an Output Type (Optional)<a class="headerlink" href="#3-define-an-output-type-optional" title="Permanent link">&para;</a></h3>
-<p>The output type of an agent is determined automatically based on the agent's <code>name</code> field in its configuration. The framework looks for a Pydantic model in <code>src/draft_agents/output_types/</code> with a class name that matches the agent's <code>name</code>.</p>
-<p><strong>Important:</strong> The <code>name</code> field in your agent's YAML configuration <strong>must exactly match</strong> the PascalCase class name of the Pydantic model defined in <code>src/draft_agents/output_types/__init__.py</code>. If a matching Pydantic model is not found, or if the names do not match, the agent's output type will default to <code>str</code>.</p>
-<p>To define a custom output type, you need to:</p>
+<p>The application will be available at <code>http://localhost:7861</code>.</p>
+<h3 id="interface-overview">Interface Overview<a class="headerlink" href="#interface-overview" title="Permanent link">&para;</a></h3>
+<p>The Agent Builder consists of four main sections:</p>
 <ol>
-<li>
-<p><strong>Create a Pydantic model</strong> in a new Python file in <code>src/draft_agents/output_types/</code>. For example, if your agent's <code>name</code> is <code>MyAgent</code>, create <code>src/draft_agents/output_types/my_agent.py</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
-</span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyAgentOutput</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
-</span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">result</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;The result of the agent&#39;s task.&quot;</span><span class="p">)</span>
-</span></code></pre></div>
-</li>
-<li>
-<p><strong>Import the new model</strong> in <code>src/draft_agents/output_types/__init__.py</code>:</p>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># src/draft_agents/output_types/__init__.py</span>
-</span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-</span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.draft_agents.output_types.critic</span><span class="w"> </span><span class="kn">import</span> <span class="n">CriticFeedback</span>
-</span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.draft_agents.output_types.evaluator</span><span class="w"> </span><span class="kn">import</span> <span class="n">EvaluatorFeedback</span>
-</span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.draft_agents.output_types.planner</span><span class="w"> </span><span class="kn">import</span> <span class="n">SearchItem</span><span class="p">,</span> <span class="n">SearchPlan</span>
-</span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.draft_agents.output_types.my_agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">MyAgentOutput</span> <span class="c1"># Add this line</span>
-</span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>
-</span><span id="__span-3-8"><a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="n">output_types</span> <span class="o">=</span> <span class="p">{</span>
-</span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="s2">&quot;Planner&quot;</span><span class="p">:</span> <span class="n">SearchPlan</span><span class="p">,</span>
-</span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="s2">&quot;Critic&quot;</span><span class="p">:</span> <span class="n">CriticFeedback</span><span class="p">,</span>
-</span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="s2">&quot;Evaluator&quot;</span><span class="p">:</span> <span class="n">EvaluatorFeedback</span><span class="p">,</span>
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="s2">&quot;MyAgent&quot;</span><span class="p">:</span> <span class="n">MyAgentOutput</span><span class="p">,</span>  <span class="c1"># Add your new agent here, ensuring name matches</span>
-</span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="p">}</span>
-</span></code></pre></div>
-</li>
+<li><strong>Browse Agents</strong>: View and manage existing agents</li>
+<li><strong>Create Agent</strong>: Build new agents from scratch</li>
+<li><strong>Edit Agent</strong>: Modify existing agent configurations</li>
+<li><strong>Delete Agent</strong>: Remove agents from the system</li>
 </ol>
-<p>Now, when you run your agent, the framework will automatically use the specified Pydantic model as the output type, provided the names match.</p>
-<h3 id="4-activate-your-main-agent-configuration">4. Activate Your Main Agent Configuration<a class="headerlink" href="#4-activate-your-main-agent-configuration" title="Permanent link">&para;</a></h3>
-<p>To use your newly created main agent configuration, you need to activate it in the <code>configs/config.yaml</code> file. This file acts as the central configuration for the entire framework.</p>
-<p>Locate the <code>defaults</code> section in <code>configs/config.yaml</code> and modify the entry for the main agent to point to your new main agent's <code>main.yaml</code> file. For example:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># configs/config.yaml</span>
-</span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
-</span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nt">defaults</span><span class="p">:</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="c1"># - agents/draft_agent/main@agents.Main # Comment out or remove the previous main agent</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agents/my_agent/main@agents.Main</span><span class="w"> </span><span class="c1"># Uncomment or add your new main agent here</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="c1"># ... other defaults ...</span>
+<h2 id="creating-agents">Creating Agents<a class="headerlink" href="#creating-agents" title="Permanent link">&para;</a></h2>
+<h3 id="step-1-basic-information">Step 1: Basic Information<a class="headerlink" href="#step-1-basic-information" title="Permanent link">&para;</a></h3>
+<p>When creating a new agent, you'll need to provide:</p>
+<ul>
+<li><strong>Agent Name</strong>: A unique identifier (used for file names and internal references)</li>
+<li><strong>Display Name</strong>: A human-readable name for the agent</li>
+<li><strong>Description</strong>: A brief description of the agent's purpose</li>
+<li><strong>Model</strong>: Select from available LLM providers</li>
+</ul>
+<h3 id="step-2-main-prompt">Step 2: Main Prompt<a class="headerlink" href="#step-2-main-prompt" title="Permanent link">&para;</a></h3>
+<p>The main prompt defines the agent's behavior and instructions. This is where you specify:</p>
+<ul>
+<li>The agent's role and responsibilities</li>
+<li>How it should interact with users</li>
+<li>What tasks it should perform</li>
+<li>Any specific guidelines or constraints</li>
+</ul>
+<h3 id="step-3-tools-and-capabilities">Step 3: Tools and Capabilities<a class="headerlink" href="#step-3-tools-and-capabilities" title="Permanent link">&para;</a></h3>
+<p>Configure the agent's available tools:</p>
+<h4 id="function-tools">Function Tools<a class="headerlink" href="#function-tools" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>kb_weaviate</strong>: Knowledge base search using Weaviate</li>
+<li><strong>perplexity_search</strong>: Web search via Perplexity API</li>
+<li><strong>tavily_search</strong>: Web search via Tavily API</li>
+</ul>
+<h4 id="mcp-servers">MCP Servers<a class="headerlink" href="#mcp-servers" title="Permanent link">&para;</a></h4>
+<ul>
+<li><strong>tavily_search</strong>: Tavily search via MCP</li>
+<li><strong>arxiv_search</strong>: ArXiv paper search via MCP</li>
+</ul>
+<h3 id="step-4-sub-agents-optional">Step 4: Sub-Agents (Optional)<a class="headerlink" href="#step-4-sub-agents-optional" title="Permanent link">&para;</a></h3>
+<p>For complex workflows, you can add sub-agents that work together:</p>
+<ol>
+<li><strong>Add Sub-Agent</strong>: Click to add a new sub-agent</li>
+<li><strong>Configure</strong>: Set name, description, model, and prompt</li>
+<li><strong>Nest</strong>: Sub-agents can have their own sub-agents (up to 5 levels deep)</li>
+</ol>
+<h2 id="managing-agents">Managing Agents<a class="headerlink" href="#managing-agents" title="Permanent link">&para;</a></h2>
+<h3 id="browse-agents">Browse Agents<a class="headerlink" href="#browse-agents" title="Permanent link">&para;</a></h3>
+<p>The browse page shows all existing agents with:
+- Agent name and display name
+- Description
+- Model information
+- Available tools
+- Quick actions (edit/delete)</p>
+<h3 id="edit-agents">Edit Agents<a class="headerlink" href="#edit-agents" title="Permanent link">&para;</a></h3>
+<p>Editing an agent allows you to:
+- Modify basic information
+- Update the main prompt
+- Add/remove tools and MCP servers
+- Manage sub-agents
+- Save changes without recreating the agent</p>
+<h3 id="delete-agents">Delete Agents<a class="headerlink" href="#delete-agents" title="Permanent link">&para;</a></h3>
+<p>Safely remove agents and their associated files:
+- Configuration files
+- Prompt files
+- Directory structures</p>
+<h2 id="advanced-features">Advanced Features<a class="headerlink" href="#advanced-features" title="Permanent link">&para;</a></h2>
+<h3 id="real-time-validation">Real-time Validation<a class="headerlink" href="#real-time-validation" title="Permanent link">&para;</a></h3>
+<p>The Agent Builder provides instant feedback on:
+- Required field validation
+- Configuration format checking
+- Tool availability verification
+- Model compatibility</p>
+<h3 id="automatic-file-management">Automatic File Management<a class="headerlink" href="#automatic-file-management" title="Permanent link">&para;</a></h3>
+<p>The application automatically handles:
+- Creating proper directory structures in <code>configs/agents/</code>
+- Generating YAML configuration files
+- Organizing prompt files in <code>prompts/</code>
+- Setting up sub-agent configurations
+- Maintaining file consistency</p>
+<h3 id="configuration-structure">Configuration Structure<a class="headerlink" href="#configuration-structure" title="Permanent link">&para;</a></h3>
+<p>The Agent Builder creates the following structure for each agent:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>configs/agents/{agent_name}/
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── main.yaml              # Main agent configuration
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├── sub_agent1.yaml        # Sub-agent configurations
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>├── sub_agent2.yaml
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>└── ...
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>prompts/{agent_name}/
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>├── main.txt               # Main agent prompt
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>├── sub_agent1.txt         # Sub-agent prompts
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>├── sub_agent2.txt
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>└── ...
 </span></code></pre></div>
-<p>By changing this line, you tell the framework to load and use the <code>main.yaml</code> from your <code>my_agent</code> directory as the primary orchestrator. You can easily switch between different main agent configurations by modifying this single line.</p>
-<p>And that's it! You have successfully created and integrated your own custom main agent configuration into the DRAFT framework.</p>
+<h2 id="best-practices">Best Practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
+<h3 id="agent-design">Agent Design<a class="headerlink" href="#agent-design" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Clear Purpose</strong>: Define a specific, focused role for each agent</li>
+<li><strong>Descriptive Names</strong>: Use meaningful names that indicate the agent's function</li>
+<li><strong>Comprehensive Prompts</strong>: Write detailed prompts that cover edge cases</li>
+<li><strong>Tool Selection</strong>: Only include tools that the agent actually needs</li>
+</ol>
+<h3 id="sub-agent-organization">Sub-Agent Organization<a class="headerlink" href="#sub-agent-organization" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Hierarchical Structure</strong>: Organize sub-agents in logical hierarchies</li>
+<li><strong>Separation of Concerns</strong>: Each sub-agent should have a distinct responsibility</li>
+<li><strong>Communication Flow</strong>: Consider how agents will communicate and coordinate</li>
+<li><strong>Depth Limits</strong>: Avoid nesting more than 3-4 levels deep</li>
+</ol>
+<p>The Agent Builder simplifies the process of creating custom research agents while maintaining the full power and flexibility of the underlying DRAFT framework.</p>
 
 
 
