@@ -25,6 +25,7 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Architecture: architecture.md
+  - Agent Builder: agent-builder.md
   - Creating Your Own Agent: creating-agents.md
   - Contributing: contributing.md
 plugins:

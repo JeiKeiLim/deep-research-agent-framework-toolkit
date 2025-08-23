@@ -103,7 +103,24 @@ You can also override Hydra values via CLI flags if desired.
 
 ## Usage
 
-### Run the GUI
+### Agent Builder Web Application
+
+Create and manage your own custom agents with the modern web-based Agent Builder:
+
+```bash
+PYTHONPATH=. uv run --env-file .env apps/agent-builder/app.py
+```
+
+Visit `http://localhost:7861` to access the Agent Builder interface.
+
+The Agent Builder provides:
+- **Visual Agent Creation**: Create new agents with an intuitive web interface
+- **Agent Management**: Browse, edit, and delete existing agents
+- **Sub-Agent Support**: Configure complex multi-agent systems with nested sub-agents
+- **Tool Integration**: Easily add function tools and MCP servers to your agents
+- **Modern UI**: Beautiful, responsive interface with real-time validation
+
+### Run the Research GUI
 
 ```bash
 PYTHONPATH=. uv run --env-file .env apps/gui.py
@@ -182,7 +199,11 @@ uv tool install arxiv-mcp-server
 ```
 deep-research-agent-framework-toolkit/
 ├── apps/
-│   └── gui.py                      # Gradio web interface
+│   ├── agent-builder/              # Agent Builder web application
+│   │   ├── app.py                  # Flask-based agent builder
+│   │   └── templates/              # HTML templates for the web UI
+│   ├── gui.py                      # Gradio web interface
+│   └── cli.py                      # Command-line interface
 ├── configs/
 │   ├── agents/                     # Agent configs (Main, Planner, Search, Synthesizer, Critic, Evaluator)
 │   ├── mcp_servers/                # MCP server definitions (Tavily, ArXiv)
@@ -249,7 +270,7 @@ To create a new agent pool (e.g., for a specific domain or task):
 - **Search**: Perplexity API, Tavily
 - **Embeddings**: Cloudflare AI (e.g., `@cf/baai/bge-m3`)
 - **Observability**: Langfuse (OTLP via OpenTelemetry)
-- **UI**: Gradio
+- **UI**: Gradio (Research GUI), Flask + Tailwind CSS (Agent Builder)
 - **Config**: Hydra + OmegaConf
 - **Typing/validation**: Pydantic
 
