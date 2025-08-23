@@ -18,10 +18,12 @@ DRAFT demonstrates how to build a sophisticated, composable AI agent system for 
 
 ### Multi-Agent System
 
-- **Planner**: Produces a structured search plan
-- **Search**: Executes searches via function tools and MCP servers
-- **Synthesizer**: Writes the final answer from evidence
-- **Critic**: Evaluates answer quality and suggests revisions
+DRAFT supports multiple agent configurations, allowing you to choose and switch between different research strategies or domain-specific agents. The built-in configuration, the Deep Research Agent, includes:
+
+- **Planner**: Produces a structured search plan.
+- **Search**: Executes searches via function tools and MCP servers.
+- **Synthesizer**: Writes the final answer from evidence.
+- **Critic**: Evaluates answer quality and suggests revisions.
 
 ### Key Components
 
@@ -223,12 +225,15 @@ PYTHONPATH=. uv run --env-file .env evals/run_evaluation.py
 - **Pre-commit**: `uv run pre-commit run --all-files`
   - **Install pre-commit hooks**: `uv run pre-commit install`
 
-### Adding new agents
+### Adding new agent pools
 
-1. Create config in `configs/agents/`
-2. Add prompt in `prompts/`
-3. Add output types in `src/draft_agents/output_types/` (skip if `str`)
-4. Reference from `configs/agents/main.yaml` if part of Main
+To create a new agent pool (e.g., for a specific domain or task):
+
+1.  **Create a new directory** under `configs/agents/` (e.g., `configs/agents/my_new_agent_pool/`).
+2.  **Define your main agent** in `configs/agents/my_new_agent_pool/main.yaml` and any sub-agents (e.g., `planner.yaml`, `search.yaml`) within the same directory.
+3.  **Organize prompts** for your new agent pool in a corresponding directory under `prompts/` (e.g., `prompts/my_new_agent_pool/`).
+4.  **Add output types** in `src/draft_agents/output_types/` if needed (skip if `str` output is sufficient).
+5.  **Activate your new agent pool** by updating the `defaults` section in `configs/config.yaml` to point to your new main agent (e.g., `- agents/my_new_agent_pool/main@agents.Main`).
 
 ### Adding new tools
 
