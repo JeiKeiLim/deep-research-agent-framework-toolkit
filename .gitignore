@@ -30,3 +30,6 @@ outputs/
 
 # Conversation history
 conversation_history/
+
+# mkdocs site
+site
