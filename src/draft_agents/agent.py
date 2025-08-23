@@ -331,7 +331,7 @@ class DeepResearchAgent:
         for mcp_server in self._mcp_servers:
             try:
                 await mcp_server.cleanup()
-            except Exception as e:
+            except BaseException as e:
                 print(f"Error cleaning up MCP server {mcp_server.name}: {e}")
 
         for mcp_server in self._mcp_servers:

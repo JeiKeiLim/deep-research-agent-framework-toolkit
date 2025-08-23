@@ -1,21 +1,21 @@
 defaults:
-  - agents/main@agents.Main
-  - agents/planner@agents.Planner
-  - agents/synthesizer@agents.Synthesizer
-  - agents/search@agents.Search
-  - agents/critic@agents.Critic
+  - agents/draft_agent/main@agents.Main
+  - agents/draft_agent/planner@agents.Planner  # Legacy support for sequential mode (soon to be deprecated)
+  - agents/draft_agent/synthesizer@agents.Synthesizer  # Legacy support for sequential mode (soon to be deprecated)
+  - agents/draft_agent/search@agents.Search  # Legacy support for sequential mode (soon to be deprecated)
+  - agents/draft_agent/critic@agents.Critic  # Legacy support for sequential mode (soon to be deprecated)
   - agents/evaluator@evaluator
   - _self_
 
 agent_configs:
   max_revision: 3
   orchestration_mode: 'agent' # "agent" or "sequential"
-  enable_history: true
+  enable_history: false
   history_storage_dir: 'conversation_history'
   max_messages: 5 # Maximum number of messages to keep in history that will be used for agent's context
 
 evaluation_configs:
-  langfuse_dataset_name: 'test_questions'
-  run_name: '2025_0806_test_run_03'
+  langfuse_dataset_name: 'test_questions_v4'
+  run_name: '2025_0823_test_run_02'
   run_async: False
   limit: -1

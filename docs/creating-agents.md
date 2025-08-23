@@ -4,50 +4,53 @@ One of the key features of the DRAFT framework is the ability to easily create a
 
 ## 1. Create a Configuration File
 
-The first step is to create a new YAML configuration file for your agent in the `configs/agents/` directory. For example, let's create a new agent called `my_agent.yaml`:
+The first step is to create a new YAML configuration file for your agent in the `configs/agents/{your_agent_name}` directory. For example, let's create a new agent called `my_agent`:
 
 ```yaml
-# configs/agents/my_agent.yaml
+# configs/agents/my_agent/main.yaml
 
 defaults:
   - ../mcp_servers/tavily_search@configs.mcp_servers  # Optional, specify the MCP server to use
   - _self_
 
-name: "My Agent"
+name: "Main"
 description: "This is my custom agent."
 configs:
   model: "gemini-1.5-pro-latest"
-  prompt: prompts/my_agent.txt  # This can be both a file path or a string
+  prompt: prompts/my_agent/main.txt  # This can be both a file path or a string
   function_tools:  # Optional. Function tools are defined at src/draft_agents/function_tools/__init__.py
     - perplexity_search
 ```
 
-In this configuration, you define the agent's name, description, LLM settings and prompt file.
+In this configuration, you define the main agent's name, description, LLM settings and prompt file.
+You can also specify any sub-agents by adding additional configuration files in the same directory (e.g., `configs/agents/my_agent/my_sub_agent.yaml`).
 
-## 2. Create a Prompt File
+## 2. Organize Prompt Files
 
-Next, create a new prompt file in the `prompts/` directory with the same name as specified in your agent's configuration. For our example, we'll create `prompts/my_agent.txt`:
+Next, create a new directory for your main agent's prompt files under `prompts/` (e.g., `prompts/my_agent/`). This directory will contain the prompt files for your main agent and any sub-agents within that configuration.
+
+For our example, we'll create `prompts/my_agent/main.txt`:
 
 ```
-You are a helpful assistant. Your task is to...
+You are the main orchestrator for the 'My Agent' configuration. Your task is to...
 ```
 
-This file contains the prompt that will be used to instruct your agent on its task.
+This file contains the prompt that will be used to instruct your main agent on its task. Similarly, you would create prompt files for any sub-agents (e.g., `prompts/my_agent/my_sub_agent.txt`).
 
 ## 3. Define an Output Type (Optional)
 
-The output type of an agent is determined automatically based on the agent's name. The framework looks for a Pydantic model in `src/draft_agents/output_types/` with a class name that matches the agent's name in PascalCase. For example, if your agent's name is `my_agent`, the framework will look for a class named `MyAgent` in `src/draft_agents/output_types/__init__.py`.
+The output type of an agent is determined automatically based on the agent's `name` field in its configuration. The framework looks for a Pydantic model in `src/draft_agents/output_types/` with a class name that matches the agent's `name`.
 
-If a matching Pydantic model is not found, the output type defaults to `str`.
+**Important:** The `name` field in your agent's YAML configuration **must exactly match** the PascalCase class name of the Pydantic model defined in `src/draft_agents/output_types/__init__.py`. If a matching Pydantic model is not found, or if the names do not match, the agent's output type will default to `str`.
 
 To define a custom output type, you need to:
 
-1.  **Create a Pydantic model** in a new Python file in `src/draft_agents/output_types/`. For example, `src/draft_agents/output_types/my_agent.py`:
+1.  **Create a Pydantic model** in a new Python file in `src/draft_agents/output_types/`. For example, if your agent's `name` is `MyAgent`, create `src/draft_agents/output_types/my_agent.py`:
 
     ```python
     from pydantic import BaseModel, Field
 
-    class MyAgent(BaseModel):
+    class MyAgentOutput(BaseModel):
         result: str = Field(description="The result of the agent's task.")
     ```
 
@@ -65,32 +68,27 @@ To define a custom output type, you need to:
         "Planner": SearchPlan,
         "Critic": CriticFeedback,
         "Evaluator": EvaluatorFeedback,
-        "MyAgent": MyAgentOutput,  # Add your new agent here
+        "MyAgent": MyAgentOutput,  # Add your new agent here, ensuring name matches
     }
     ```
 
-Now, when you run your agent, the framework will automatically use the `MyAgent` Pydantic model as the output type.
+Now, when you run your agent, the framework will automatically use the specified Pydantic model as the output type, provided the names match.
 
-## 4. Integrate Your Agent
+## 4. Activate Your Main Agent Configuration
 
-Finally, you need to integrate your new agent into the framework. This is done in two steps:
+To use your newly created main agent configuration, you need to activate it in the `configs/config.yaml` file. This file acts as the central configuration for the entire framework.
 
-### Add to `configs/agents/main.yaml`
-
-If you want your new agent to be a sub-agent of the `Main` agent, you need to add it to the `defaults` list in `configs/agents/main.yaml`:
+Locate the `defaults` section in `configs/config.yaml` and modify the entry for the main agent to point to your new main agent's `main.yaml` file. For example:
 
 ```yaml
-# configs/agents/main.yaml
+# configs/config.yaml
 
 defaults:
-  - planner@sub_agents.Planner
-  - synthesizer@sub_agents.Synthesizer
-  - search@sub_agents.Search
-  - critic@sub_agents.Critic
-  - my_agent@sub_agents.MyAgent  # Add your new agent here
-  - _self_
-
-# ...
+  # - agents/draft_agent/main@agents.Main # Comment out or remove the previous main agent
+  - agents/my_agent/main@agents.Main # Uncomment or add your new main agent here
+  # ... other defaults ...
 ```
 
-And that's it! You have successfully created and integrated your own custom agent into the DRAFT framework.
+By changing this line, you tell the framework to load and use the `main.yaml` from your `my_agent` directory as the primary orchestrator. You can easily switch between different main agent configurations by modifying this single line.
+
+And that's it! You have successfully created and integrated your own custom main agent configuration into the DRAFT framework.

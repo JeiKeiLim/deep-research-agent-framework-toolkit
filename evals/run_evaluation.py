@@ -60,7 +60,7 @@ async def run_agent_with_trace(
     Returns None if agent exceeds max_turn limit.
     """
     try:
-        result = await agent.query(query)
+        result = await asyncio.shield(agent.query(query))
         if "|" in result.final_output:
             answer = result.final_output.split("|")[-1].strip()
         else:
@@ -106,6 +106,34 @@ async def run_evaluation_coroutine(
         ).get_query(),
     )
     evaluator_response = evaluator_result.final_output_as(EvaluatorFeedback)
+    print(traced_response)
+    print(evaluator_response)
+
+    if evaluator_response:
+        langfuse_client.create_score(
+            name="factual_accuracy",
+            value=evaluator_response.score_factual_accuracy.score,
+            comment=evaluator_response.score_factual_accuracy.reasoning,
+            trace_id=traced_response.trace_id,
+        )
+        langfuse_client.create_score(
+            name="completeness",
+            value=evaluator_response.score_completeness.score,
+            comment=evaluator_response.score_completeness.reasoning,
+            trace_id=traced_response.trace_id,
+        )
+        langfuse_client.create_score(
+            name="coherence",
+            value=evaluator_response.score_coherence.score,
+            comment=evaluator_response.score_coherence.reasoning,
+            trace_id=traced_response.trace_id,
+        )
+        langfuse_client.create_score(
+            name="citations",
+            value=evaluator_response.score_citations.score,
+            comment=evaluator_response.score_citations.reasoning,
+            trace_id=traced_response.trace_id,
+        )
 
     return traced_response, evaluator_response
 
@@ -119,7 +147,7 @@ def run_evaluation(cfg: DictConfig) -> None:
     agent = DeepResearchAgent(cfg.agents, **cfg.agent_configs)
 
     async_openai_client = AsyncOpenAI()
-    evaluator_agent = agent_config_to_agent(cfg.evaluator, async_openai_client)
+    evaluator_agent, _ = agent_config_to_agent(cfg.evaluator, async_openai_client)
 
     lf_dataset_items = langfuse_client.get_dataset(eval_cfg.langfuse_dataset_name).items
     if eval_cfg.get("limit", -1) > 0:
@@ -132,60 +160,31 @@ def run_evaluation(cfg: DictConfig) -> None:
             )
             for lf_dataset_item in lf_dataset_items
         ]
-        results = asyncio.run(
+        asyncio.run(
             gather_with_progress(coroutines, description="Running agent and evaluating")
         )
-    else:
+        return
 
-        async def run_sequential() -> list[
-            tuple[LangFuseTracedResponse, EvaluatorFeedback | None] | None
-        ]:
-            """Run evaluation sequentially."""
-            results = []
-            for lf_dataset_item in track(
-                lf_dataset_items, description="Running agent and evaluating"
-            ):
-                try:
-                    result = await run_evaluation_coroutine(
-                        agent, evaluator_agent, lf_dataset_item, eval_cfg.run_name
-                    )
-                except Exception as e:
-                    print(f"Error processing {lf_dataset_item.id}: {e}")
-                    result = None
-                results.append(result)
-            return results
+    async def run_sequential() -> list[
+        tuple[LangFuseTracedResponse, EvaluatorFeedback | None] | None
+    ]:
+        """Run evaluation sequentially."""
+        results = []
+        for lf_dataset_item in track(
+            lf_dataset_items, description="Running agent and evaluating"
+        ):
+            try:
+                result = await run_evaluation_coroutine(
+                    agent, evaluator_agent, lf_dataset_item, eval_cfg.run_name
+                )
+            except Exception as e:
+                print(f"Error processing {lf_dataset_item.id}: {e}")
+                result = None
+            results.append(result)
+        return results
 
-        results = asyncio.run(run_sequential())
-
-    for _traced_response, _eval_output in track(
-        results, total=len(results), description="Uploading scores"
-    ):
-        # Link the trace to the dataset item for analysis
-        if _eval_output is not None:
-            langfuse_client.create_score(
-                name="factual_accuracy",
-                value=_eval_output.score_factual_accuracy.score,
-                comment=_eval_output.score_factual_accuracy.reasoning,
-                trace_id=_traced_response.trace_id,
-            )
-            langfuse_client.create_score(
-                name="completeness",
-                value=_eval_output.score_completeness.score,
-                comment=_eval_output.score_completeness.reasoning,
-                trace_id=_traced_response.trace_id,
-            )
-            langfuse_client.create_score(
-                name="coherence",
-                value=_eval_output.score_coherence.score,
-                comment=_eval_output.score_coherence.reasoning,
-                trace_id=_traced_response.trace_id,
-            )
-            langfuse_client.create_score(
-                name="citations",
-                value=_eval_output.score_citations.score,
-                comment=_eval_output.score_citations.reasoning,
-                trace_id=_traced_response.trace_id,
-            )
+    asyncio.run(run_sequential())
+    langfuse_client.flush()
 
 
 if __name__ == "__main__":

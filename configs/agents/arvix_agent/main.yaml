@@ -1,0 +1,11 @@
+defaults:
+  - ../../mcp_servers/arxiv_search@configs.mcp_servers
+  - synthesizer@sub_agents.Synthesizer
+  - critic@sub_agents.Critic
+  - _self_
+
+name: "Main"
+description: "This agent orchestrates the analysis of arXiv papers. It takes a user query, uses the arxiv-search tool to gather information, and then coordinates with the synthesizer and critic agents to provide a comprehensive analysis."
+configs:
+  model: "gemini-2.5-pro"
+  prompt: prompts/arxiv_agent/main.txt
