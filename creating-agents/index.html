@@ -448,9 +448,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-create-a-prompt-file" class="md-nav__link">
+  <a href="#2-organize-prompt-files" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Create a Prompt File
+      2. Organize Prompt Files
     </span>
   </a>
   
@@ -466,26 +466,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-integrate-your-agent" class="md-nav__link">
+  <a href="#4-activate-your-main-agent-configuration" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Integrate Your Agent
+      4. Activate Your Main Agent Configuration
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="4. Integrate Your Agent">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#add-to-configsagentsmainyaml" class="md-nav__link">
-    <span class="md-ellipsis">
-      Add to configs/agents/main.yaml
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -555,9 +540,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#2-create-a-prompt-file" class="md-nav__link">
+  <a href="#2-organize-prompt-files" class="md-nav__link">
     <span class="md-ellipsis">
-      2. Create a Prompt File
+      2. Organize Prompt Files
     </span>
   </a>
   
@@ -573,26 +558,11 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-integrate-your-agent" class="md-nav__link">
+  <a href="#4-activate-your-main-agent-configuration" class="md-nav__link">
     <span class="md-ellipsis">
-      4. Integrate Your Agent
+      4. Activate Your Main Agent Configuration
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="4. Integrate Your Agent">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#add-to-configsagentsmainyaml" class="md-nav__link">
-    <span class="md-ellipsis">
-      Add to configs/agents/main.yaml
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -618,37 +588,39 @@
 <h1 id="creating-your-own-agent">Creating Your Own Agent<a class="headerlink" href="#creating-your-own-agent" title="Permanent link">&para;</a></h1>
 <p>One of the key features of the DRAFT framework is the ability to easily create and integrate your own custom agents. This guide will walk you through the process of creating a new agent using a simple YAML configuration.</p>
 <h2 id="1-create-a-configuration-file">1. Create a Configuration File<a class="headerlink" href="#1-create-a-configuration-file" title="Permanent link">&para;</a></h2>
-<p>The first step is to create a new YAML configuration file for your agent in the <code>configs/agents/</code> directory. For example, let's create a new agent called <code>my_agent.yaml</code>:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># configs/agents/my_agent.yaml</span>
+<p>The first step is to create a new YAML configuration file for your agent in the <code>configs/agents/{your_agent_name}</code> directory. For example, let's create a new agent called <code>my_agent</code>:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># configs/agents/my_agent/main.yaml</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nt">defaults</span><span class="p">:</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">../mcp_servers/tavily_search@configs.mcp_servers</span><span class="w">  </span><span class="c1"># Optional, specify the MCP server to use</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">_self_</span>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;My</span><span class="nv"> </span><span class="s">Agent&quot;</span>
+</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Main&quot;</span>
 </span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;This</span><span class="nv"> </span><span class="s">is</span><span class="nv"> </span><span class="s">my</span><span class="nv"> </span><span class="s">custom</span><span class="nv"> </span><span class="s">agent.&quot;</span>
 </span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="nt">configs</span><span class="p">:</span>
 </span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="w">  </span><span class="nt">model</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;gemini-1.5-pro-latest&quot;</span>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span><span class="nt">prompt</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prompts/my_agent.txt</span><span class="w">  </span><span class="c1"># This can be both a file path or a string</span>
+</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="w">  </span><span class="nt">prompt</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">prompts/my_agent/main.txt</span><span class="w">  </span><span class="c1"># This can be both a file path or a string</span>
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="w">  </span><span class="nt">function_tools</span><span class="p">:</span><span class="w">  </span><span class="c1"># Optional. Function tools are defined at src/draft_agents/function_tools/__init__.py</span>
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">perplexity_search</span>
 </span></code></pre></div>
-<p>In this configuration, you define the agent's name, description, LLM settings and prompt file.</p>
-<h2 id="2-create-a-prompt-file">2. Create a Prompt File<a class="headerlink" href="#2-create-a-prompt-file" title="Permanent link">&para;</a></h2>
-<p>Next, create a new prompt file in the <code>prompts/</code> directory with the same name as specified in your agent's configuration. For our example, we'll create <code>prompts/my_agent.txt</code>:</p>
-<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>You are a helpful assistant. Your task is to...
+<p>In this configuration, you define the main agent's name, description, LLM settings and prompt file.
+You can also specify any sub-agents by adding additional configuration files in the same directory (e.g., <code>configs/agents/my_agent/my_sub_agent.yaml</code>).</p>
+<h2 id="2-organize-prompt-files">2. Organize Prompt Files<a class="headerlink" href="#2-organize-prompt-files" title="Permanent link">&para;</a></h2>
+<p>Next, create a new directory for your main agent's prompt files under <code>prompts/</code> (e.g., <code>prompts/my_agent/</code>). This directory will contain the prompt files for your main agent and any sub-agents within that configuration.</p>
+<p>For our example, we'll create <code>prompts/my_agent/main.txt</code>:</p>
+<div class="language-text highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>You are the main orchestrator for the &#39;My Agent&#39; configuration. Your task is to...
 </span></code></pre></div>
-<p>This file contains the prompt that will be used to instruct your agent on its task.</p>
+<p>This file contains the prompt that will be used to instruct your main agent on its task. Similarly, you would create prompt files for any sub-agents (e.g., <code>prompts/my_agent/my_sub_agent.txt</code>).</p>
 <h2 id="3-define-an-output-type-optional">3. Define an Output Type (Optional)<a class="headerlink" href="#3-define-an-output-type-optional" title="Permanent link">&para;</a></h2>
-<p>The output type of an agent is determined automatically based on the agent's name. The framework looks for a Pydantic model in <code>src/draft_agents/output_types/</code> with a class name that matches the agent's name in PascalCase. For example, if your agent's name is <code>my_agent</code>, the framework will look for a class named <code>MyAgent</code> in <code>src/draft_agents/output_types/__init__.py</code>.</p>
-<p>If a matching Pydantic model is not found, the output type defaults to <code>str</code>.</p>
+<p>The output type of an agent is determined automatically based on the agent's <code>name</code> field in its configuration. The framework looks for a Pydantic model in <code>src/draft_agents/output_types/</code> with a class name that matches the agent's <code>name</code>.</p>
+<p><strong>Important:</strong> The <code>name</code> field in your agent's YAML configuration <strong>must exactly match</strong> the PascalCase class name of the Pydantic model defined in <code>src/draft_agents/output_types/__init__.py</code>. If a matching Pydantic model is not found, or if the names do not match, the agent's output type will default to <code>str</code>.</p>
 <p>To define a custom output type, you need to:</p>
 <ol>
 <li>
-<p><strong>Create a Pydantic model</strong> in a new Python file in <code>src/draft_agents/output_types/</code>. For example, <code>src/draft_agents/output_types/my_agent.py</code>:</p>
+<p><strong>Create a Pydantic model</strong> in a new Python file in <code>src/draft_agents/output_types/</code>. For example, if your agent's <code>name</code> is <code>MyAgent</code>, create <code>src/draft_agents/output_types/my_agent.py</code>:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyAgent</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+</span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyAgentOutput</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">result</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;The result of the agent&#39;s task.&quot;</span><span class="p">)</span>
 </span></code></pre></div>
 </li>
@@ -665,29 +637,24 @@
 </span><span id="__span-3-9"><a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="s2">&quot;Planner&quot;</span><span class="p">:</span> <span class="n">SearchPlan</span><span class="p">,</span>
 </span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="s2">&quot;Critic&quot;</span><span class="p">:</span> <span class="n">CriticFeedback</span><span class="p">,</span>
 </span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="s2">&quot;Evaluator&quot;</span><span class="p">:</span> <span class="n">EvaluatorFeedback</span><span class="p">,</span>
-</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="s2">&quot;MyAgent&quot;</span><span class="p">:</span> <span class="n">MyAgentOutput</span><span class="p">,</span>  <span class="c1"># Add your new agent here</span>
+</span><span id="__span-3-12"><a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="s2">&quot;MyAgent&quot;</span><span class="p">:</span> <span class="n">MyAgentOutput</span><span class="p">,</span>  <span class="c1"># Add your new agent here, ensuring name matches</span>
 </span><span id="__span-3-13"><a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="p">}</span>
 </span></code></pre></div>
 </li>
 </ol>
-<p>Now, when you run your agent, the framework will automatically use the <code>MyAgent</code> Pydantic model as the output type.</p>
-<h2 id="4-integrate-your-agent">4. Integrate Your Agent<a class="headerlink" href="#4-integrate-your-agent" title="Permanent link">&para;</a></h2>
-<p>Finally, you need to integrate your new agent into the framework. This is done in two steps:</p>
-<h3 id="add-to-configsagentsmainyaml">Add to <code>configs/agents/main.yaml</code><a class="headerlink" href="#add-to-configsagentsmainyaml" title="Permanent link">&para;</a></h3>
-<p>If you want your new agent to be a sub-agent of the <code>Main</code> agent, you need to add it to the <code>defaults</code> list in <code>configs/agents/main.yaml</code>:</p>
-<div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># configs/agents/main.yaml</span>
+<p>Now, when you run your agent, the framework will automatically use the specified Pydantic model as the output type, provided the names match.</p>
+<h2 id="4-activate-your-main-agent-configuration">4. Activate Your Main Agent Configuration<a class="headerlink" href="#4-activate-your-main-agent-configuration" title="Permanent link">&para;</a></h2>
+<p>To use your newly created main agent configuration, you need to activate it in the <code>configs/config.yaml</code> file. This file acts as the central configuration for the entire framework.</p>
+<p>Locate the <code>defaults</code> section in <code>configs/config.yaml</code> and modify the entry for the main agent to point to your new main agent's <code>main.yaml</code> file. For example:</p>
+<div class="language-yaml highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># configs/config.yaml</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nt">defaults</span><span class="p">:</span>
-</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">planner@sub_agents.Planner</span>
-</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">synthesizer@sub_agents.Synthesizer</span>
-</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">search@sub_agents.Search</span>
-</span><span id="__span-4-7"><a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">critic@sub_agents.Critic</span>
-</span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">my_agent@sub_agents.MyAgent</span><span class="w">  </span><span class="c1"># Add your new agent here</span>
-</span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">_self_</span>
-</span><span id="__span-4-10"><a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
-</span><span id="__span-4-11"><a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1"># ...</span>
+</span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span><span class="c1"># - agents/draft_agent/main@agents.Main # Comment out or remove the previous main agent</span>
+</span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">agents/my_agent/main@agents.Main</span><span class="w"> </span><span class="c1"># Uncomment or add your new main agent here</span>
+</span><span id="__span-4-6"><a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">  </span><span class="c1"># ... other defaults ...</span>
 </span></code></pre></div>
-<p>And that's it! You have successfully created and integrated your own custom agent into the DRAFT framework.</p>
+<p>By changing this line, you tell the framework to load and use the <code>main.yaml</code> from your <code>my_agent</code> directory as the primary orchestrator. You can easily switch between different main agent configurations by modifying this single line.</p>
+<p>And that's it! You have successfully created and integrated your own custom main agent configuration into the DRAFT framework.</p>
 
 
 

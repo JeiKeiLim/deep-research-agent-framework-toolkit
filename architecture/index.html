@@ -570,7 +570,8 @@
 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
 <p>The DRAFT framework is designed to be modular and extensible, allowing for the easy composition of AI agents to perform complex research tasks. The architecture is centered around a multi-agent system where each agent has a specialized role.</p>
 <h2 id="multi-agent-system">Multi-Agent System<a class="headerlink" href="#multi-agent-system" title="Permanent link">&para;</a></h2>
-<p>The core of DRAFT is its multi-agent system, which consists of the following specialized agents:</p>
+<p>The core of DRAFT is its multi-agent system, which is highly configurable. DRAFT supports multiple configurations of the multi-agent system, each designed for different research strategies or domains. You can select which "Main" agent configuration is active via <code>configs/config.yaml</code>.</p>
+<p>Each multi-agent system configuration typically consists of a "Main" orchestrator agent and a set of specialized sub-agents. For example, a common configuration includes:</p>
 <ul>
 <li><strong>Planner</strong>: This agent is responsible for creating a structured research plan based on the user's query. It breaks down the research task into smaller, manageable steps.</li>
 <li><strong>Search</strong>: The search agent executes the research plan by querying various knowledge sources and tools. It can interact with knowledge bases like Weaviate, and web search services like Perplexity and Tavily.</li>
@@ -591,7 +592,7 @@
 <p>DRAFT supports two modes of agent orchestration:</p>
 <ul>
 <li><strong><code>agent</code> mode (default)</strong>: In this mode, a single orchestrator agent manages the entire research process with streaming updates.</li>
-<li><strong><code>sequential</code> mode</strong>: This mode follows a more explicit workflow of plan → search → synthesize → critique, with a configurable number of revision iterations. (We are planning to deprecate this mode in the future.)</li>
+<li><strong><code>sequential</code> mode</strong>: This mode follows a more explicit workflow of plan → search → synthesize → critique, with a configurable number of revision iterations. (DRAFT agent only. We are planning to deprecate this mode in the future.)</li>
 </ul>
 <p>This modular architecture allows for the flexible composition of agents and tools, making it easy to extend and adapt the framework to different research needs.</p>
 
