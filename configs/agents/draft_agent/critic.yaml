@@ -2,4 +2,4 @@ name: "Critic"
 description: "Use this agent **fourth**, after the Synthesizer, to perform **Step 4: CRITIQUE**. It evaluates the synthesized answer and decides if a revision is needed. This agent must always be called."
 configs:
   model: "gemini-2.5-flash"
-  prompt: "prompts/critic.txt"
+  prompt: "prompts/draft_agent/critic.txt"

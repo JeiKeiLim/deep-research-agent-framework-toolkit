@@ -2,4 +2,4 @@ name: "Synthesizer"
 description: "Use this agent **third**, after Search, to perform **Step 3: SYNTHESIZE**. It takes the collected evidence and writes the final answer. This agent must always be called."
 configs:
   model: "gemini-2.5-flash"
-  prompt: "prompts/synthesizer.txt"
+  prompt: "prompts/draft_agent/synthesizer.txt"

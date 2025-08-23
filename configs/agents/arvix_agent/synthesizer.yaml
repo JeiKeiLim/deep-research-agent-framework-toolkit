@@ -1,0 +1,5 @@
+name: "ArvixSynthesizer"
+description: "This agent synthesizes information from arXiv search results into a coherent analysis or summary that answers the user's original query."
+configs:
+  model: "gemini-2.5-flash"
+  prompt: "prompts/arxiv_agent/synthesizer.txt"
