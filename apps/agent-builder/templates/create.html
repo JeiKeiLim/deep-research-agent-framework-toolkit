@@ -1,0 +1,518 @@
+{% extends "base.html" %}
+
+{% block title %}Create Agent - Agent Builder{% endblock %}
+
+{% block content %}
+<div class="fade-in-up">
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Create New Agent</h2>
+        <p class="text-gray-600">Create a new agent configuration with sub-agents</p>
+    </div>
+
+    <form id="createAgentForm" class="space-y-8">
+        <!-- Main Agent Configuration -->
+        <div class="glass-card rounded-xl p-6">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">Main Agent Configuration</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label for="agentName" class="block text-sm font-medium text-gray-700 mb-2">Agent Name *</label>
+                    <input type="text" id="agentName" name="agentName" required
+                           class="form-input w-full px-4 py-3 rounded-lg"
+                           placeholder="e.g., research_agent">
+                    <p class="text-xs text-gray-500 mt-1">Unique identifier for the agent</p>
+                </div>
+                <div>
+                    <label for="agentModel" class="block text-sm font-medium text-gray-700 mb-2">Model *</label>
+                    <select id="agentModel" name="agentModel" required
+                            class="form-input w-full px-4 py-3 rounded-lg">
+                        <option value="">Select a model</option>
+                        {% for model in models %}
+                        <option value="{{ model }}" {% if model == 'gemini-2.5-flash' %}selected{% endif %}>{{ model }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label for="displayName" class="block text-sm font-medium text-gray-700 mb-2">Display Name *</label>
+                <input type="text" id="displayName" name="displayName" required
+                       class="form-input w-full px-4 py-3 rounded-lg"
+                       placeholder="e.g., Research Agent">
+                <p class="text-xs text-gray-500 mt-1">Human-readable name for the agent</p>
+            </div>
+
+            <div class="mb-6">
+                <label for="description" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea id="description" name="description" rows="3"
+                          class="form-input w-full px-4 py-3 rounded-lg"
+                          placeholder="Describe what this agent does..."></textarea>
+            </div>
+
+            <div class="mb-6">
+                <label for="mainPrompt" class="block text-sm font-medium text-gray-700 mb-2">Main Prompt *</label>
+                <textarea id="mainPrompt" name="mainPrompt" rows="6" required
+                          class="form-input w-full px-4 py-3 rounded-lg"
+                          placeholder="Enter the main prompt for this agent..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Function Tools</label>
+                    <div class="space-y-2 max-h-40 overflow-y-auto">
+                        {% for tool in tools %}
+                        <label class="flex items-center">
+                            <input type="checkbox" name="functionTools" value="{{ tool }}"
+                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">{{ tool }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">MCP Servers</label>
+                    <div class="space-y-2 max-h-40 overflow-y-auto">
+                        {% for server in mcp_servers %}
+                        <label class="flex items-center">
+                            <input type="checkbox" name="mcpServers" value="{{ server }}"
+                                   class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">{{ server }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sub-agents Section -->
+        <div class="glass-card rounded-xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Sub-agents</h3>
+                <button type="button" onclick="showSubAgentForm()"
+                        class="btn-secondary px-4 py-2 rounded-lg font-medium">
+                    + Add Sub-agent
+                </button>
+            </div>
+
+            <!-- Sub-agents Display -->
+            <div id="subAgentsDisplay" class="space-y-4">
+                <div class="text-center py-8 text-gray-500">
+                    <svg class="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    <p>No sub-agents configured</p>
+                    <p class="text-sm">Click "Add Sub-agent" to get started</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Button -->
+        <div class="flex justify-end">
+            <button type="submit" class="btn-primary text-white px-8 py-3 rounded-lg font-medium">
+                Create Agent
+            </button>
+        </div>
+    </form>
+
+    <!-- Sub-agent Form Modal -->
+    <div id="subAgentModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="glass-card rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-gray-900" id="subAgentModalTitle">Add Sub-agent</h3>
+                        <button onclick="closeSubAgentModal()" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form id="subAgentForm" class="space-y-6">
+                        <input type="hidden" id="editingSubAgentIndex" value="-1">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="subAgentName" class="block text-sm font-medium text-gray-700 mb-2">Sub-agent Name *</label>
+                                <input type="text" id="subAgentName" required
+                                       class="form-input w-full px-4 py-3 rounded-lg"
+                                       placeholder="e.g., Search, Planner">
+                            </div>
+                            <div>
+                                <label for="subAgentModel" class="block text-sm font-medium text-gray-700 mb-2">Model *</label>
+                                <select id="subAgentModel" required
+                                        class="form-input w-full px-4 py-3 rounded-lg">
+                                    <option value="">Select a model</option>
+                                    {% for model in models %}
+                                    <option value="{{ model }}" {% if model == 'gemini-2.5-flash' %}selected{% endif %}>{{ model }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="subAgentDescription" class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                            <textarea id="subAgentDescription" rows="2"
+                                      class="form-input w-full px-4 py-3 rounded-lg"
+                                      placeholder="Describe what this sub-agent does..."></textarea>
+                        </div>
+
+                        <div>
+                            <label for="subAgentPrompt" class="block text-sm font-medium text-gray-700 mb-2">Prompt *</label>
+                            <textarea id="subAgentPrompt" rows="4" required
+                                      class="form-input w-full px-4 py-3 rounded-lg"
+                                      placeholder="Enter the prompt for this sub-agent..."></textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Function Tools</label>
+                                <div class="space-y-2 max-h-32 overflow-y-auto">
+                                    {% for tool in tools %}
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="subAgentTools" value="{{ tool }}"
+                                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                        <span class="ml-2 text-sm text-gray-700">{{ tool }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">MCP Servers</label>
+                                <div class="space-y-2 max-h-32 overflow-y-auto">
+                                    {% for server in mcp_servers %}
+                                    <label class="flex items-center">
+                                        <input type="checkbox" name="subAgentMcpServers" value="{{ server }}"
+                                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                        <span class="ml-2 text-sm text-gray-700">{{ server }}</span>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-4">
+                            <button type="button" onclick="closeSubAgentModal()"
+                                    class="btn-secondary px-6 py-2 rounded-lg font-medium">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn-primary text-white px-6 py-2 rounded-lg font-medium">
+                                Add Sub-agent
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let subAgents = [];
+    let editingIndex = -1;
+
+    // Form submission
+    document.getElementById('createAgentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        createAgent();
+    });
+
+    // Sub-agent form submission
+    document.getElementById('subAgentForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (editingIndex >= 0) {
+            updateSubAgent();
+        } else {
+            addSubAgent();
+        }
+    });
+
+    function createAgent() {
+        const agentName = document.getElementById('agentName').value.trim();
+        const displayName = document.getElementById('displayName').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const agentModel = document.getElementById('agentModel').value;
+        const mainPrompt = document.getElementById('mainPrompt').value.trim();
+
+        if (!agentName) {
+            showNotification('Agent name is required', 'error');
+            return;
+        }
+
+        if (!agentModel) {
+            showNotification('Agent model is required', 'error');
+            return;
+        }
+
+        if (!mainPrompt) {
+            showNotification('Main prompt is required', 'error');
+            return;
+        }
+
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+
+        showLoading(submitBtn);
+
+        const agentData = {
+            name: agentName,
+            display_name: displayName,
+            description: description,
+            model: agentModel,
+            main_prompt: mainPrompt,
+            function_tools: Array.from(document.querySelectorAll('input[name="functionTools"]:checked')).map(cb => cb.value),
+            mcp_servers: Array.from(document.querySelectorAll('input[name="mcpServers"]:checked')).map(cb => cb.value),
+            sub_agents: subAgents
+        };
+
+        axios.post('/api/agents', agentData)
+            .then(response => {
+                showNotification(response.data.message, 'success');
+                setTimeout(() => {
+                    window.location.href = '/browse';
+                }, 2000);
+            })
+            .catch(error => {
+                console.error('Error creating agent:', error);
+                showNotification(error.response?.data?.error || 'Error creating agent', 'error');
+            })
+            .finally(() => {
+                hideLoading(submitBtn, originalText);
+            });
+    }
+
+    function showSubAgentForm() {
+        editingIndex = -1;
+        document.getElementById('subAgentModalTitle').textContent = 'Add Sub-agent';
+        document.getElementById('subAgentForm').reset();
+        document.getElementById('subAgentModal').classList.remove('hidden');
+    }
+
+    function closeSubAgentModal() {
+        document.getElementById('subAgentModal').classList.add('hidden');
+        editingIndex = -1;
+    }
+
+    function addSubAgent() {
+        const subAgentName = document.getElementById('subAgentName').value.trim();
+        const subAgentDescription = document.getElementById('subAgentDescription').value.trim();
+        const subAgentModel = document.getElementById('subAgentModel').value;
+        const subAgentPrompt = document.getElementById('subAgentPrompt').value.trim();
+
+        if (!subAgentName) {
+            showNotification('Sub-agent name is required', 'error');
+            return;
+        }
+
+        if (!subAgentModel) {
+            showNotification('Sub-agent model is required', 'error');
+            return;
+        }
+
+        if (!subAgentPrompt) {
+            showNotification('Sub-agent prompt is required', 'error');
+            return;
+        }
+
+        const subAgent = {
+            name: subAgentName,
+            description: subAgentDescription,
+            model: subAgentModel,
+            prompt: subAgentPrompt,
+            function_tools: Array.from(document.querySelectorAll('input[name="subAgentTools"]:checked')).map(cb => cb.value),
+            mcp_servers: Array.from(document.querySelectorAll('input[name="subAgentMcpServers"]:checked')).map(cb => cb.value),
+            has_nested: false,
+            sub_agents: []
+        };
+
+        subAgents.push(subAgent);
+        updateSubAgentsDisplay();
+        closeSubAgentModal();
+        document.getElementById('subAgentForm').reset();
+        showNotification('Sub-agent added successfully', 'success');
+    }
+
+    function editSubAgent(index) {
+        editingIndex = index;
+        const subAgent = subAgents[index];
+
+        document.getElementById('subAgentModalTitle').textContent = 'Edit Sub-agent';
+        document.getElementById('subAgentName').value = subAgent.name;
+        document.getElementById('subAgentDescription').value = subAgent.description;
+        document.getElementById('subAgentModel').value = subAgent.model;
+        document.getElementById('subAgentPrompt').value = subAgent.prompt;
+
+        // Reset checkboxes
+        document.querySelectorAll('input[name="subAgentTools"]').forEach(cb => cb.checked = false);
+        document.querySelectorAll('input[name="subAgentMcpServers"]').forEach(cb => cb.checked = false);
+
+        // Set checked checkboxes
+        subAgent.function_tools.forEach(tool => {
+            const cb = document.querySelector(`input[name="subAgentTools"][value="${tool}"]`);
+            if (cb) cb.checked = true;
+        });
+
+        subAgent.mcp_servers.forEach(server => {
+            const cb = document.querySelector(`input[name="subAgentMcpServers"][value="${server}"]`);
+            if (cb) cb.checked = true;
+        });
+
+        document.getElementById('subAgentModal').classList.remove('hidden');
+    }
+
+    function updateSubAgent() {
+        const subAgentName = document.getElementById('subAgentName').value.trim();
+        const subAgentDescription = document.getElementById('subAgentDescription').value.trim();
+        const subAgentModel = document.getElementById('subAgentModel').value;
+        const subAgentPrompt = document.getElementById('subAgentPrompt').value.trim();
+
+        if (!subAgentName) {
+            showNotification('Sub-agent name is required', 'error');
+            return;
+        }
+
+        if (!subAgentModel) {
+            showNotification('Sub-agent model is required', 'error');
+            return;
+        }
+
+        if (!subAgentPrompt) {
+            showNotification('Sub-agent prompt is required', 'error');
+            return;
+        }
+
+        const subAgent = {
+            name: subAgentName,
+            description: subAgentDescription,
+            model: subAgentModel,
+            prompt: subAgentPrompt,
+            function_tools: Array.from(document.querySelectorAll('input[name="subAgentTools"]:checked')).map(cb => cb.value),
+            mcp_servers: Array.from(document.querySelectorAll('input[name="subAgentMcpServers"]:checked')).map(cb => cb.value),
+            has_nested: false,
+            sub_agents: []
+        };
+
+        subAgents[editingIndex] = subAgent;
+        updateSubAgentsDisplay();
+        closeSubAgentModal();
+        showNotification('Sub-agent updated successfully', 'success');
+    }
+
+    function deleteSubAgent(index) {
+        if (confirm('Are you sure you want to delete this sub-agent?')) {
+            subAgents.splice(index, 1);
+            updateSubAgentsDisplay();
+            showNotification('Sub-agent deleted successfully', 'success');
+        }
+    }
+
+    function updateSubAgentsDisplay() {
+        const display = document.getElementById('subAgentsDisplay');
+
+        if (subAgents.length === 0) {
+            display.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <svg class="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    <p>No sub-agents configured</p>
+                    <p class="text-sm">Click "Add Sub-agent" to get started</p>
+                </div>
+            `;
+        } else {
+            display.innerHTML = subAgents.map((subAgent, index) => {
+                const cardId = 'create-sub-agent-' + index;
+                return `
+                    <div class="sub-agent-card rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h5 class="text-lg font-semibold text-gray-900">${subAgent.name}</h5>
+                            <div class="flex items-center space-x-2">
+                                <span class="badge badge-model px-2 py-1 rounded text-xs">${subAgent.model}</span>
+                                <button type="button" onclick="editSubAgent(${index})"
+                                        class="text-blue-600 hover:text-blue-800">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" onclick="deleteSubAgent(${index})"
+                                        class="text-red-600 hover:text-red-800">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-gray-600 text-sm mb-3">${subAgent.description || 'No description'}</p>
+                        <div class="space-y-2">
+                            <div>
+                                <span class="text-xs font-medium text-gray-500">Tools:</span>
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    ${subAgent.function_tools.length > 0
+                                        ? subAgent.function_tools.map(tool => `<span class="badge badge-tool px-2 py-1 rounded text-xs">${tool}</span>`).join('')
+                                        : '<span class="text-gray-400 text-xs italic">None</span>'
+                                    }
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500">MCP Servers:</span>
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    ${subAgent.mcp_servers.length > 0
+                                        ? subAgent.mcp_servers.map(server => `<span class="badge badge-mcp px-2 py-1 rounded text-xs">${server}</span>`).join('')
+                                        : '<span class="text-gray-400 text-xs italic">None</span>'
+                                    }
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" onclick="togglePrompt('${cardId}')"
+                                        class="text-blue-600 hover:text-blue-800 text-xs font-medium flex items-center">
+                                    <span id="${cardId}-toggle-text">Show Prompt</span>
+                                    <svg id="${cardId}-icon" class="w-4 h-4 ml-1 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div id="${cardId}-prompt" class="hidden mt-2">
+                                    <div class="bg-gray-50 p-3 rounded-lg">
+                                        <pre class="text-xs text-gray-900 whitespace-pre-wrap">${subAgent.prompt || 'No prompt'}</pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    function togglePrompt(cardId) {
+        const promptDiv = document.getElementById(cardId + '-prompt');
+        const toggleText = document.getElementById(cardId + '-toggle-text');
+        const icon = document.getElementById(cardId + '-icon');
+
+        if (promptDiv.classList.contains('hidden')) {
+            promptDiv.classList.remove('hidden');
+            toggleText.textContent = 'Hide Prompt';
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            promptDiv.classList.add('hidden');
+            toggleText.textContent = 'Show Prompt';
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('subAgentModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeSubAgentModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeSubAgentModal();
+        }
+    });
+</script>
+{% endblock %}
