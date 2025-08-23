@@ -5,10 +5,11 @@ A modern, professional web application for creating and managing
 multi-agent configurations for the DRAFT research framework.
 """
 
+import shutil
 import sys
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import yaml
 from flask import Flask, jsonify, redirect, render_template, request, url_for
@@ -34,23 +35,24 @@ class SubAgent:
     description: str
     model: str
     prompt: str
-    function_tools: List[str]
-    mcp_servers: List[str]
+    function_tools: list[str]
+    mcp_servers: list[str]
     has_nested: bool = False
-    sub_agents: List["SubAgent"] = None
+    sub_agents: list["SubAgent"] | None = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Initialize sub_agents if None."""
         if self.sub_agents is None:
             self.sub_agents = []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         data = asdict(self)
         data["sub_agents"] = [agent.to_dict() for agent in self.sub_agents]
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "SubAgent":
+    def from_dict(cls, data: dict[str, Any]) -> "SubAgent":
         """Create from dictionary representation."""
         sub_agents_data = data.pop("sub_agents", [])
         sub_agents = [cls.from_dict(sa) for sa in sub_agents_data]
@@ -67,18 +69,18 @@ class Agent:
     description: str
     model: str
     main_prompt: str
-    function_tools: List[str]
-    mcp_servers: List[str]
-    sub_agents: List[SubAgent]
+    function_tools: list[str]
+    mcp_servers: list[str]
+    sub_agents: list[SubAgent]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary representation."""
         data = asdict(self)
         data["sub_agents"] = [agent.to_dict() for agent in self.sub_agents]
         return data
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Agent":
+    def from_dict(cls, data: dict[str, Any]) -> "Agent":
         """Create from dictionary representation."""
         sub_agents_data = data.pop("sub_agents", [])
         sub_agents = [SubAgent.from_dict(sa) for sa in sub_agents_data]
@@ -89,14 +91,14 @@ class Agent:
 class AgentManager:
     """Manages agent operations and configurations."""
 
-    def __init__(self, config_dir: Path, prompts_dir: Path):
+    def __init__(self, config_dir: Path, prompts_dir: Path) -> None:
         """Initialize the agent manager."""
         self.config_dir = config_dir
         self.prompts_dir = prompts_dir
         self.agents_dir = config_dir / "agents"
         self.agents_dir.mkdir(exist_ok=True)
 
-    def get_available_models(self) -> List[str]:
+    def get_available_models(self) -> list[str]:
         """Get list of available models."""
         return [
             "gemini-2.5-flash",
@@ -107,12 +109,12 @@ class AgentManager:
             "claude-3-5-haiku",
         ]
 
-    def get_available_tools(self) -> List[str]:
+    def get_available_tools(self) -> list[str]:
         """Get list of available function tools."""
         # Read from actual function_tools module
         return ["kb_weaviate", "perplexity_search", "tavily_search"]
 
-    def get_available_mcp_servers(self) -> List[str]:
+    def get_available_mcp_servers(self) -> list[str]:
         """Get list of available MCP servers."""
         # Read from actual MCP server configs
         mcp_servers = []
@@ -123,7 +125,7 @@ class AgentManager:
                 mcp_servers.append(server_name)
         return mcp_servers if mcp_servers else ["tavily_search", "arxiv_search"]
 
-    def get_existing_agents(self) -> List[Dict[str, str]]:
+    def get_existing_agents(self) -> list[dict[str, str]]:
         """Get list of existing agents."""
         agents = []
         for agent_dir in self.agents_dir.iterdir():
@@ -131,7 +133,7 @@ class AgentManager:
                 config_file = agent_dir / "main.yaml"
                 if config_file.exists():
                     try:
-                        with open(config_file, "r") as f:
+                        with open(config_file) as f:
                             config = yaml.safe_load(f)
                             agents.append(
                                 {
@@ -145,7 +147,7 @@ class AgentManager:
                         continue
         return agents
 
-    def get_agent_details(self, agent_name: str) -> Optional[Dict[str, Any]]:
+    def get_agent_details(self, agent_name: str) -> dict[str, Any] | None:
         """Get detailed information about an agent."""
         agent_dir = self.agents_dir / agent_name
         if not agent_dir.exists():
@@ -154,14 +156,14 @@ class AgentManager:
         try:
             # Load main configuration
             config_file = agent_dir / "main.yaml"
-            with open(config_file, "r") as f:
+            with open(config_file) as f:
                 config = yaml.safe_load(f)
 
             # Load main prompt
             prompt_file = self.prompts_dir / agent_name / "main.txt"
             main_prompt = ""
             if prompt_file.exists():
-                with open(prompt_file, "r") as f:
+                with open(prompt_file) as f:
                     main_prompt = f.read()
 
             # Load sub-agents
@@ -252,8 +254,6 @@ class AgentManager:
     def delete_agent(self, agent_name: str) -> bool:
         """Delete an agent configuration."""
         try:
-            import shutil
-
             # Remove agent directory
             agent_dir = self.agents_dir / agent_name
             if agent_dir.exists():
@@ -272,7 +272,7 @@ class AgentManager:
 
     def _load_sub_agents_recursive(
         self, agent_dir: Path, prompt_dir: Path, depth: int = 0
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Recursively load sub-agents."""
         if depth > 5:  # Prevent infinite recursion
             return []
@@ -281,7 +281,7 @@ class AgentManager:
         for config_file in agent_dir.glob("*.yaml"):
             if config_file.name != "main.yaml":
                 try:
-                    with open(config_file, "r") as f:
+                    with open(config_file) as f:
                         config = yaml.safe_load(f)
 
                     # Load prompt
@@ -289,7 +289,7 @@ class AgentManager:
                     prompt_file = prompt_dir / f"{sub_agent_name}.txt"
                     prompt = ""
                     if prompt_file.exists():
-                        with open(prompt_file, "r") as f:
+                        with open(prompt_file) as f:
                             prompt = f.read()
 
                     sub_agents.append(
@@ -314,8 +314,8 @@ class AgentManager:
         return sub_agents
 
     def _create_sub_agents_recursive(
-        self, sub_agents: List[SubAgent], agent_dir: Path, prompt_dir: Path
-    ):
+        self, sub_agents: list[SubAgent], agent_dir: Path, prompt_dir: Path
+    ) -> None:
         """Recursively create sub-agents."""
         for sub_agent in sub_agents:
             # Create sub-agent configuration (in same directory as main.yaml)
@@ -350,7 +350,7 @@ class AgentManager:
             with open(prompt_file, "w") as f:
                 f.write(sub_agent.prompt)
 
-    def _extract_mcp_servers(self, config: Dict[str, Any]) -> List[str]:
+    def _extract_mcp_servers(self, config: dict[str, Any]) -> list[str]:
         """Extract MCP servers from configuration."""
         defaults = config.get("defaults", [])
         if isinstance(defaults, list):
@@ -358,7 +358,8 @@ class AgentManager:
             mcp_servers = []
             for item in defaults:
                 if isinstance(item, str) and "mcp_servers" in item:
-                    # Extract server name from path like "../../mcp_servers/arxiv_search@configs.mcp_servers"
+                    # Extract server name from path like
+                    # "../../mcp_servers/arxiv_search@configs.mcp_servers"
                     server_name = item.split("/")[-1].split("@")[0]
                     mcp_servers.append(server_name)
             return mcp_servers
@@ -372,20 +373,20 @@ agent_manager = AgentManager(app.config["CONFIG_DIR"], app.config["PROMPTS_DIR"]
 
 
 @app.route("/")
-def index():
+def index() -> str:
     """Main page."""
     return redirect(url_for("browse_agents"))
 
 
 @app.route("/browse")
-def browse_agents():
+def browse_agents() -> str:
     """Browse agents page."""
     agents = agent_manager.get_existing_agents()
     return render_template("browse.html", agents=agents)
 
 
 @app.route("/create")
-def create_agent():
+def create_agent() -> str:
     """Create agent page."""
     models = agent_manager.get_available_models()
     tools = agent_manager.get_available_tools()
@@ -396,7 +397,7 @@ def create_agent():
 
 
 @app.route("/edit")
-def edit_agent():
+def edit_agent() -> str:
     """Edit agent page."""
     agents = agent_manager.get_existing_agents()
     models = agent_manager.get_available_models()
@@ -408,7 +409,7 @@ def edit_agent():
 
 
 @app.route("/delete")
-def delete_agent():
+def delete_agent() -> str:
     """Delete agent page."""
     agents = agent_manager.get_existing_agents()
     return render_template("delete.html", agents=agents)
@@ -416,14 +417,14 @@ def delete_agent():
 
 # API Routes
 @app.route("/api/agents")
-def api_get_agents():
+def api_get_agents() -> str:
     """Get all agents."""
     agents = agent_manager.get_existing_agents()
     return jsonify(agents)
 
 
 @app.route("/api/agents/<agent_name>")
-def api_get_agent(agent_name):
+def api_get_agent(agent_name: str) -> str:
     """Get agent details."""
     details = agent_manager.get_agent_details(agent_name)
     if details:
@@ -432,7 +433,7 @@ def api_get_agent(agent_name):
 
 
 @app.route("/api/agents", methods=["POST"])
-def api_create_agent():
+def api_create_agent() -> str:
     """Create a new agent."""
     try:
         data = request.get_json()
@@ -464,7 +465,7 @@ def api_create_agent():
 
 
 @app.route("/api/agents/<agent_name>", methods=["PUT"])
-def api_update_agent(agent_name):
+def api_update_agent(agent_name: str) -> str:
     """Update an agent."""
     try:
         # Check if agent exists
@@ -501,7 +502,7 @@ def api_update_agent(agent_name):
 
 
 @app.route("/api/agents/<agent_name>", methods=["DELETE"])
-def api_delete_agent(agent_name):
+def api_delete_agent(agent_name: str) -> str:
     """Delete an agent."""
     try:
         # Check if agent exists
@@ -520,7 +521,7 @@ def api_delete_agent(agent_name):
 
 
 @app.route("/api/options")
-def api_get_options():
+def api_get_options() -> str:
     """Get available options."""
     return jsonify(
         {
