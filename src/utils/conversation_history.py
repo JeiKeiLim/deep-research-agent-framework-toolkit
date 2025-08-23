@@ -1,5 +1,4 @@
-"""
-Conversation history management utilities.
+"""Conversation history management utilities.
 
 Tools to manage conversation history for the Deep Research Agent.
 Enables referencing past conversations and maintaining context
@@ -171,7 +170,7 @@ class ConversationHistory:
             title: Title for the conversation
             initial_message: Optional initial message content
 
-        Returns
+        Returns:
         -------
             Conversation ID
         """
@@ -206,7 +205,7 @@ class ConversationHistory:
     ) -> bool:
         """Add a message to an existing conversation.
 
-        Returns
+        Returns:
         -------
             True if successful, False if conversation not found
         """
@@ -285,6 +284,12 @@ class ConversationManager:
     """
 
     def __init__(self, history: ConversationHistory, max_messages: int = 5) -> None:
+        """Initializes the ConversationManager.
+
+        Args:
+            history: An instance of ConversationHistory to manage.
+            max_messages: The maximum number of messages to keep in context.
+        """
         self.history = history
         self.max_messages = max_messages
         self.current_conversation_id: str | None = None

@@ -50,6 +50,11 @@ class DeepResearchAgentGUI:
     """A class representing the Deep Research Agent GUI."""
 
     def __init__(self, cfg: DictConfig) -> None:
+        """Initializes the DeepResearchAgentGUI.
+
+        Args:
+            cfg: The configuration object for the agent.
+        """
         self.app = self._create_gui()
         self.agent = DeepResearchAgent(cfg.agents, **cfg.agent_configs)
         self.progress_queue = asyncio.Queue()
@@ -432,7 +437,7 @@ class DeepResearchAgentGUI:
     def _search_conversation_history(self, query: str) -> tuple[gr.update, gr.update]:
         """Search conversation history and update the search dropdown.
 
-        Returns
+        Returns:
         -------
         tuple[gr.update, gr.update]
             First: update for search dropdown (choices as (label, id),

@@ -28,8 +28,7 @@ async def gather_with_progress(
     coros: "list[types.CoroutineType[Any, Any, T]]",
     description: str = "Running tasks",
 ) -> Sequence[T]:
-    """
-    Run a list of coroutines concurrently, display a rich.Progress bar as each finishes.
+    """Run coroutines concurrently, displaying a rich.Progress bar as each finishes.
 
     Returns the results in the same order as the input list.
 

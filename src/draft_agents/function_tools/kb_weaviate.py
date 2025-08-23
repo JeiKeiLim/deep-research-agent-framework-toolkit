@@ -60,6 +60,18 @@ class AsyncWeaviateKnowledgeBase:
         embedding_api_key: str | None = None,
         embedding_base_url: str | None = None,
     ) -> None:
+        """Initializes the AsyncWeaviateKnowledgeBase.
+
+        Args:
+            async_client: The Weaviate async client.
+            collection_name: The name of the Weaviate collection to search.
+            num_results: The maximum number of search results to return.
+            snippet_length: Max length of text snippet in search results.
+            max_concurrency: The maximum number of concurrent requests to Weaviate.
+            embedding_model_name: The name of the embedding model to use.
+            embedding_api_key: The API key for the embedding model.
+            embedding_base_url: The base URL for the embedding model API.
+        """
         self.async_client = async_client
         self.collection_name = collection_name
         self.num_results = num_results
@@ -86,13 +98,13 @@ class AsyncWeaviateKnowledgeBase:
         keyword : str
             The search keyword to query the knowledge base.
 
-        Returns
+        Returns:
         -------
         SearchResults
             A list of search results. Each result contains source and highlight.
             If no results are found, returns an empty list.
 
-        Raises
+        Raises:
         ------
         Exception
             If Weaviate is not ready to accept requests (HTTP 503).
@@ -136,7 +148,7 @@ class AsyncWeaviateKnowledgeBase:
         text : str
             The text to be vectorized.
 
-        Returns
+        Returns:
         -------
         list[float]
             A list of floats representing the vectorized text.
@@ -199,7 +211,7 @@ def get_weaviate_async_client(
     skip_init_checks : bool, optional, default=False
         Whether to skip initialization checks.
 
-    Returns
+    Returns:
     -------
     WeaviateAsyncClient
         An asynchronous Weaviate client configured with the provided parameters.

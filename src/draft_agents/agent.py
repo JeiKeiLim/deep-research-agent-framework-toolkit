@@ -44,8 +44,9 @@ def agent_config_to_agent(
 
     Args:
         config (DictConfig): The configuration dictionary for the agent.
+        openai_client (AsyncOpenAI): The OpenAI client to use for agent interactions.
 
-    Returns
+    Returns:
     -------
         agents.Agent: An instance of the Agent class configured with the provided
         settings.
@@ -317,7 +318,7 @@ class DeepResearchAgent:
         Args:
             query: The query to process.
 
-        Returns
+        Returns:
         -------
             Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
             returns the result.
@@ -361,7 +362,7 @@ class DeepResearchAgent:
         Args:
             query: The query to process.
 
-        Returns
+        Returns:
         -------
             Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
             returns the result.
@@ -408,7 +409,7 @@ class DeepResearchAgent:
         Args:
             query: The query to process.
 
-        Returns
+        Returns:
         -------
             Coroutine[Any, Any, RunResult]: A coroutine that processes the query and
             returns the result.
