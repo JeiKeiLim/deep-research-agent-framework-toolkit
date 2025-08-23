@@ -52,7 +52,7 @@ class PerplexitySearchResult(pydantic.BaseModel):
     def __repr__(self) -> str:
         """Return a JSON representation of the model.
 
-        Returns
+        Returns:
         -------
         str
             The model dumped as a JSON string.
@@ -102,12 +102,12 @@ class AsyncPerplexitySearch:
         query : str
             The search query.
 
-        Returns
+        Returns:
         -------
         PerplexitySearchResult
             A structured search result containing the content and extracted URLs.
 
-        Raises
+        Raises:
         ------
         ValueError
             If the query is empty.
@@ -166,12 +166,12 @@ def get_perplexity_async_client(
     timeout : int, optional
         The timeout for requests in seconds.
 
-    Returns
+    Returns:
     -------
     httpx.AsyncClient
         An asynchronous httpx client.
 
-    Raises
+    Raises:
     ------
     ValueError
         If the API key is not provided and not found in environment variables.

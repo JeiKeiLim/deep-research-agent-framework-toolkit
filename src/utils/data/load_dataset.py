@@ -47,7 +47,7 @@ def get_dataset(dataset_url: str, limit: int | None = None) -> pd.DataFrame:
             {provider}://{path}[@{commit}][[subset]]:{split}
         limit: optional; max number of items to include.
 
-    Returns
+    Returns:
     -------
         Huggingface dataset instance.
     """

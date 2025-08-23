@@ -24,7 +24,7 @@ class _TavilySearchItem(pydantic.BaseModel):
     def __repr__(self) -> str:
         """Return a JSON representation of the model.
 
-        Returns
+        Returns:
         -------
         str
             The model dumped as a JSON string.
@@ -50,12 +50,12 @@ def get_tavily_client(api_key: str | None = None) -> TavilyClient:
     api_key : str, optional
         The Tavily API key.
 
-    Returns
+    Returns:
     -------
     TavilyClient
         An instance of TavilyClient configured with the provided API key.
 
-    Raises
+    Raises:
     ------
     ValueError
         If the API key is not provided and not found in environment variables.
@@ -73,6 +73,11 @@ class AsyncTavilyClient:
     """Asynchronous Tavily client for performing searches."""
 
     def __init__(self, client: TavilyClient) -> None:
+        """Initializes the AsyncTavilyClient.
+
+        Args:
+            client: An instance of TavilyClient.
+        """
         self.client = client
 
     async def search(self, query: str) -> TavilySearchResult:
@@ -85,7 +90,7 @@ class AsyncTavilyClient:
         api_key : str, optional
             The Tavily API key.
 
-        Returns
+        Returns:
         -------
         dict
             The search results from the Tavily API.
