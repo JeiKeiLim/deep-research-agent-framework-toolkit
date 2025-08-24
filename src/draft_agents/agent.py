@@ -12,6 +12,8 @@ import asyncio
 import os
 from collections.abc import Callable
 from typing import Literal
+from datetime import datetime
+import zoneinfo
 
 import agents
 from agents.mcp import MCPServer, MCPServerStdio
@@ -31,6 +33,9 @@ from src.utils.conversation_history import ConversationHistory, ConversationMana
 from src.utils.gradio.messages import oai_agent_stream_to_str_list
 from src.utils.langfuse.shared_client import langfuse_client
 
+
+def _today_seoul_iso() -> str:
+    return datetime.now(zoneinfo.ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d")
 
 def agent_config_to_agent(
     config: DictConfig,
@@ -59,8 +64,13 @@ def agent_config_to_agent(
         with open(prompt) as file:
             prompt = file.read()
 
+    today = _today_seoul_iso()
+    prompt = prompt.replace("{today}", today)
+
     if "prompt_args" in config.configs:
         for key, value in config.configs.prompt_args.items():
+            if key == "today":
+                continue
             prompt = prompt.replace(f"{{{key}}}", str(value))
 
     model_settings = agents.ModelSettings()
@@ -348,7 +358,6 @@ class DeepResearchAgent:
         # Add assistant response to history
         if self.conversation_manager:
             response_content = response.final_output_as(str)
-            self.conversation_manager.add_assistant_message(response_content)
 
         return response
 
@@ -434,7 +443,9 @@ class DeepResearchAgent:
                 with langfuse_client.start_as_current_span(
                     name=f"DeepResearchAgentFrameworkToolkit.query.{revision_header_str}",
                 ) as revision_span:
+                    today = _today_seoul_iso()
                     planner_input = f"""Question:
+                    TODAY (Asia/Seoul): {today}
                     {query}
 
                     Previous Answer:
@@ -506,6 +517,7 @@ class DeepResearchAgent:
 
                     revision_span.update(output=synthesized_answer)
                     critic_input = f"""Query**: {query}
+                    **TODAY (Asia/Seoul)**: {today}
 
                     **Answer**: {synthesized_answer}
 
