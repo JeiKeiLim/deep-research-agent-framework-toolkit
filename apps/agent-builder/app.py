@@ -7,6 +7,7 @@ multi-agent configurations for the DRAFT research framework.
 
 import shutil
 import sys
+import traceback
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -367,6 +368,102 @@ class AgentManager:
             return defaults.get("mcp_servers", [])
         return []
 
+    def activate_agent(self, agent_name: str) -> bool:
+        """Activate an agent by updating the main config.yaml file."""
+        try:
+            print(f"Activating agent: {agent_name}")
+
+            # Check if agent exists
+            agent_dir = self.agents_dir / agent_name
+            print(f"Agent directory: {agent_dir}")
+            if not agent_dir.exists():
+                print(f"Agent directory does not exist: {agent_dir}")
+                return False
+
+            # Load the main config.yaml file
+            config_file = self.config_dir / "config.yaml"
+            print(f"Config file path: {config_file}")
+            if not config_file.exists():
+                print(f"Config file does not exist: {config_file}")
+                return False
+
+            with open(config_file) as f:
+                config = yaml.safe_load(f)
+            print(f"Current config: {config}")
+
+            # Get the agent's main configuration
+            agent_config_file = agent_dir / "main.yaml"
+            if not agent_config_file.exists():
+                print(f"Agent config file does not exist: {agent_config_file}")
+                return False
+
+            # Update only the main agent entry in the defaults list
+            # Keep all other entries unchanged
+            defaults = config.get("defaults", [])
+            new_defaults = []
+
+            # Find and replace only the main agent entry
+            main_agent_found = False
+            for entry in defaults:
+                if entry.startswith("agents/") and "/main@agents.Main" in entry:
+                    # Replace the main agent entry
+                    new_defaults.append(f"agents/{agent_name}/main@agents.Main")
+                    main_agent_found = True
+                    print(
+                        f"Replaced main agent entry: {entry} -> agents/{agent_name}/main@agents.Main"
+                    )
+                else:
+                    # Keep all other entries unchanged
+                    new_defaults.append(entry)
+
+            # If no main agent entry was found, add it at the beginning
+            if not main_agent_found:
+                new_defaults.insert(0, f"agents/{agent_name}/main@agents.Main")
+                print(
+                    f"Added new main agent entry: agents/{agent_name}/main@agents.Main"
+                )
+
+            print(f"Updated defaults: {new_defaults}")
+
+            # Update the config
+            config["defaults"] = new_defaults
+
+            # Write back to config.yaml
+            with open(config_file, "w") as f:
+                yaml.dump(config, f, default_flow_style=False, indent=2)
+
+            print(f"Successfully updated config file: {config_file}")
+            return True
+
+        except Exception as e:
+            print(f"Error activating agent {agent_name}: {e}")
+            traceback.print_exc()
+            return False
+
+    def get_active_agent(self) -> str | None:
+        """Get the currently active agent name from config.yaml."""
+        try:
+            config_file = self.config_dir / "config.yaml"
+            if not config_file.exists():
+                return None
+
+            with open(config_file) as f:
+                config = yaml.safe_load(f)
+
+            defaults = config.get("defaults", [])
+            if isinstance(defaults, list) and len(defaults) > 0:
+                # Extract agent name from first default entry like
+                # "agents/draft_agent/main@agents.Main"
+                first_default = defaults[0]
+                if "agents/" in first_default:
+                    return first_default.split("/")[1]
+
+            return None
+
+        except Exception as e:
+            print(f"Error getting active agent: {e}")
+            return None
+
 
 # Initialize agent manager
 agent_manager = AgentManager(app.config["CONFIG_DIR"], app.config["PROMPTS_DIR"])
@@ -382,7 +479,8 @@ def index() -> str:
 def browse_agents() -> str:
     """Browse agents page."""
     agents = agent_manager.get_existing_agents()
-    return render_template("browse.html", agents=agents)
+    active_agent = agent_manager.get_active_agent()
+    return render_template("browse.html", agents=agents, active_agent=active_agent)
 
 
 @app.route("/create")
@@ -530,6 +628,47 @@ def api_get_options() -> str:
             "mcp_servers": agent_manager.get_available_mcp_servers(),
         }
     )
+
+
+@app.route("/api/agents/<agent_name>/activate", methods=["POST"])
+def api_activate_agent(agent_name: str) -> str:
+    """Activate an agent."""
+    try:
+        print(f"API: Activating agent {agent_name}")
+
+        # Check if agent exists
+        existing_agent = agent_manager.get_agent_details(agent_name)
+        if not existing_agent:
+            print(f"API: Agent {agent_name} not found")
+            return jsonify({"error": f"Agent '{agent_name}' not found"}), 404
+
+        print(f"API: Agent {agent_name} found, proceeding with activation")
+
+        # Activate the agent
+        success = agent_manager.activate_agent(agent_name)
+        print(f"API: Activation result: {success}")
+
+        if success:
+            return jsonify(
+                {
+                    "message": f"Agent '{agent_name}' activated successfully. Please restart the agent server manually for changes to take effect."
+                }
+            )
+        return jsonify({"error": f"Failed to activate agent '{agent_name}'"}), 500
+
+    except Exception as e:
+        print(f"API: Error activating agent {agent_name}: {e}")
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/agents/active")
+def api_get_active_agent() -> str:
+    """Get the currently active agent."""
+    active_agent = agent_manager.get_active_agent()
+    if active_agent:
+        return jsonify({"active_agent": active_agent})
+    return jsonify({"active_agent": None})
 
 
 if __name__ == "__main__":

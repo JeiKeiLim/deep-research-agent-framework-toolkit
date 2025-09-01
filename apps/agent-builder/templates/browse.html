@@ -14,14 +14,27 @@
     {% if agents %}
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {% for agent in agents %}
-            <div class="glass-card rounded-xl p-6 cursor-pointer hover:shadow-lg transition-all duration-300"
-                 onclick="loadAgentDetails('{{ agent.name }}')">
+            <div class="glass-card rounded-xl p-6 hover:shadow-lg transition-all duration-300">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xl font-semibold text-gray-900">{{ agent.display_name }}</h3>
                     <span class="text-sm text-gray-500">{{ agent.name }}</span>
                 </div>
-                <div class="text-gray-600">
+                <div class="text-gray-600 mb-4">
                     <p class="text-sm">Click to view details</p>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="loadAgentDetails('{{ agent.name }}')"
+                            class="btn-secondary text-gray-700 px-4 py-2 rounded-lg font-medium text-sm flex-1">
+                        View Details
+                    </button>
+                    <button onclick="activateAgent('{{ agent.name }}')"
+                            class="btn-success text-white px-4 py-2 rounded-lg font-medium text-sm flex-1"
+                            id="activate-btn-{{ agent.name }}">
+                        Activate
+                    </button>
+                </div>
+                <div class="mt-3 text-center">
+                    <span class="text-xs text-gray-500" id="status-{{ agent.name }}"></span>
                 </div>
             </div>
             {% endfor %}
@@ -66,6 +79,81 @@
 
 {% block scripts %}
 <script>
+    // Load active agent status when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        loadActiveAgentStatus();
+    });
+
+    function loadActiveAgentStatus() {
+        axios.get('/api/agents/active')
+            .then(response => {
+                const activeAgent = response.data.active_agent;
+                console.log('Active agent:', activeAgent);
+
+                // First, reset all agent cards to inactive state
+                document.querySelectorAll('[id^="status-"]').forEach(statusElement => {
+                    const agentName = statusElement.id.replace('status-', '');
+                    statusElement.innerHTML = '<span class="text-gray-400">Inactive</span>';
+
+                    // Reset all activate buttons to normal state
+                    const activateBtn = document.getElementById(`activate-btn-${agentName}`);
+                    if (activateBtn) {
+                        activateBtn.disabled = false;
+                        activateBtn.textContent = 'Activate';
+                        activateBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                        activateBtn.classList.add('btn-success');
+                    }
+                });
+
+                // Then, set the active agent if one exists
+                if (activeAgent) {
+                    const statusElement = document.getElementById(`status-${activeAgent}`);
+                    const activateBtn = document.getElementById(`activate-btn-${activeAgent}`);
+
+                    if (statusElement) {
+                        statusElement.innerHTML = '<span class="text-green-600 font-medium">✓ Active</span>';
+                    }
+
+                    if (activateBtn) {
+                        activateBtn.disabled = true;
+                        activateBtn.textContent = 'Active';
+                        activateBtn.classList.remove('btn-success');
+                        activateBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error loading active agent status:', error);
+            });
+    }
+
+    function activateAgent(agentName) {
+        const activateBtn = document.getElementById(`activate-btn-${agentName}`);
+        const originalText = activateBtn.textContent;
+
+        // Show loading state
+        showLoading(activateBtn);
+
+        axios.post(`/api/agents/${agentName}/activate`)
+            .then(response => {
+                showNotification(response.data.message, 'success');
+
+                // Small delay to ensure the backend has processed the change
+                setTimeout(() => {
+                    // Reload active agent status
+                    loadActiveAgentStatus();
+                }, 100);
+            })
+            .catch(error => {
+                console.error('Error activating agent:', error);
+                const errorMessage = error.response?.data?.error || 'Failed to activate agent';
+                showNotification(errorMessage, 'error');
+            })
+            .finally(() => {
+                hideLoading(activateBtn, originalText);
+            });
+    }
+
     function loadAgentDetails(agentName) {
         // Use the same test data structure that works
         const testAgent = {
